@@ -68,14 +68,3 @@ Orbita is derived from **Evolve Launcher v2** by [JarJarBlinkz](https://github.c
 
 Game cover art is loaded from the [LauncherIcons](https://github.com/JarJarBlinkz/LauncherIcons) repository by JarJarBlinkz.
 
----
-
-## Updates
-
-Orbita checks the latest release of this repository on GitHub. When a newer version is available, Settings > Updates shows what is new and lets you download and install it.
-
-- Tap **Check for updates** to check right away.
-- Turn on **Check automatically** to let Orbita check by itself from time to time.
-- Android asks you to allow installing apps from this source the first time.
-
-To publish an update: create a new Release with a version tag (for example `v1.0.1`, higher than the installed one) and attach the APK. Always sign the APK with the same key, otherwise Android refuses to install it over the old version.
