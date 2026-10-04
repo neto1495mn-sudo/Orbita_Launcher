@@ -577,6 +577,17 @@ public class MainActivity extends AppCompatActivity {
 
         startStatusUpdates();
 
+        // Atualizacao automatica: confere o GitHub de tempos em tempos (se ligada em Configuracoes)
+        appsGrid.postDelayed(() -> {
+            try {
+                if (isFinishing() || isDestroyed()) return;
+                UpdateManager um = new UpdateManager(MainActivity.this);
+                if (um.shouldCheckForUpdates()) um.checkForUpdates(false);
+            } catch (Exception e) {
+                Log.e("MainActivity", "auto update check failed", e);
+            }
+        }, 8000);
+
         // Setup Quick Settings panel (volume only)
         setupQuickSettings();
 

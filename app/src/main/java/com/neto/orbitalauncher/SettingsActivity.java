@@ -1337,19 +1337,82 @@ public class SettingsActivity extends AppCompatActivity {
     // ===== VERSION & UPDATES =====
 
     private void setupVersionAndUpdates() {
-        // Atualizacoes ficam desativadas por enquanto: o projeto sera atualizado futuramente pelo GitHub.
         AppCompatButton btnCheckUpdates = findViewById(R.id.btnCheckUpdates);
         SwitchCompat switchAutoUpdate = findViewById(R.id.switchAutoUpdate);
 
         if (switchAutoUpdate != null) {
             switchAutoUpdate.setChecked(prefs.getBoolean("auto_update_enabled", true));
-            switchAutoUpdate.setOnCheckedChangeListener((buttonView, isChecked) ->
-                    prefs.edit().putBoolean("auto_update_enabled", isChecked).apply());
+            switchAutoUpdate.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                prefs.edit().putBoolean("auto_update_enabled", isChecked).apply();
+                Toast.makeText(this, isChecked ? R.string.set_toast_auto_update_on : R.string.set_toast_auto_update_off,
+                        Toast.LENGTH_SHORT).show();
+            });
         }
 
         if (btnCheckUpdates != null) {
-            btnCheckUpdates.setOnClickListener(v ->
-                    Toast.makeText(this, getString(R.string.set_toast_no_update), Toast.LENGTH_SHORT).show());
+            btnCheckUpdates.setOnClickListener(v -> {
+                Toast.makeText(this, R.string.set_toast_checking_updates, Toast.LENGTH_SHORT).show();
+                final UpdateManager updateManager = new UpdateManager(this);
+
+                updateManager.checkForUpdates(new UpdateManager.UpdateCallback() {
+                    @Override
+                    public void onUpdateAvailable(String version, String downloadUrl, String releaseNotes) {
+                        if (isFinishing() || isDestroyed()) return;
+                        android.widget.LinearLayout container = new android.widget.LinearLayout(SettingsActivity.this);
+                        container.setOrientation(android.widget.LinearLayout.VERTICAL);
+                        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+                        container.setPadding(padding, padding, padding, padding);
+
+                        android.widget.TextView versionInfo = new android.widget.TextView(SettingsActivity.this);
+                        versionInfo.setText(SettingsActivity.this.getString(R.string.set_update_available_version, version));
+                        versionInfo.setTextSize(13);
+                        versionInfo.setTypeface(null, android.graphics.Typeface.BOLD);
+                        versionInfo.setPadding(0, 0, 0, padding);
+                        container.addView(versionInfo);
+
+                        android.widget.TextView notesView = new android.widget.TextView(SettingsActivity.this);
+                        notesView.setTextSize(12);
+                        notesView.setLineSpacing(0, 1.2f);
+                        notesView.setTextIsSelectable(true);
+                        String html = UpdateManager.markdownToHtml(releaseNotes);
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                            notesView.setText(android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_COMPACT));
+                        } else {
+                            notesView.setText(android.text.Html.fromHtml(html));
+                        }
+                        notesView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+
+                        android.widget.ScrollView scroll = new android.widget.ScrollView(SettingsActivity.this);
+                        scroll.addView(notesView);
+                        int maxHeight = (int) (getResources().getDisplayMetrics().heightPixels * 0.6);
+                        scroll.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, maxHeight));
+                        container.addView(scroll);
+
+                        ThemedDialog.showThemed(new AlertDialog.Builder(SettingsActivity.this)
+                                .setTitle(R.string.set_update_available_title)
+                                .setView(container)
+                                .setPositiveButton(R.string.set_update_download, (d, w) -> updateManager.downloadAndInstall(downloadUrl))
+                                .setNegativeButton(R.string.set_later, null)
+                                .create());
+                    }
+
+                    @Override
+                    public void onNoUpdateAvailable(String currentVersion) {
+                        if (isFinishing() || isDestroyed()) return;
+                        ThemedDialog.showThemed(new AlertDialog.Builder(SettingsActivity.this)
+                                .setTitle(R.string.set_uptodate_title)
+                                .setMessage(SettingsActivity.this.getString(R.string.set_uptodate_message, currentVersion))
+                                .setPositiveButton(R.string.set_ok, null)
+                                .create());
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Toast.makeText(SettingsActivity.this, error, Toast.LENGTH_LONG).show();
+                    }
+                });
+            });
         }
     }
 

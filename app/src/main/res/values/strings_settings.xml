@@ -173,4 +173,14 @@
     <string name="set_stop">Stop</string>
     <string name="set_toast_stopping_vrshell">Stopping VrShell...</string>
     <string name="set_no_internet">No internet</string>
+
+    <!-- Updates -->
+    <string name="set_toast_checking_updates">Checking for updates...</string>
+    <string name="set_toast_auto_update_on">Automatic updates enabled</string>
+    <string name="set_toast_auto_update_off">Automatic updates disabled</string>
+    <string name="set_update_available_title">Update available</string>
+    <string name="set_update_available_version">Version %1$s is available.</string>
+    <string name="set_update_download">Download</string>
+    <string name="set_uptodate_title">Up to date</string>
+    <string name="set_uptodate_message">You are already on the latest version.\n\nCurrent version: %1$s</string>
 </resources>

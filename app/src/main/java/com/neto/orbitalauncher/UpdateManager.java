@@ -35,11 +35,11 @@ public class UpdateManager {
 
     private static final String TAG = "UpdateManager";
     private static final String PREFS_NAME = "VRLPrefs";
-    private static final String KEY_AUTO_UPDATE_CHECK = "auto_update_check";
+    private static final String KEY_AUTO_UPDATE_CHECK = "auto_update_enabled";
     private static final String KEY_LAST_UPDATE_CHECK = "last_update_check";
     private static final String KEY_UPDATE_FREQUENCY = "update_frequency"; // hours
 
-    // IMPORTANT: Replace with your GitHub username and repository name
+    // Repositorio das releases do Orbita no GitHub (publico)
     private static final String GITHUB_API_URL = "https://api.github.com/repos/neto1495mn-sudo/Orbita_Launcher/releases/latest";
 
     private final Context context;
@@ -150,7 +150,7 @@ public class UpdateManager {
                 connection.setReadTimeout(10000);
 
                 // GitHub API requires User-Agent header
-                connection.setRequestProperty("User-Agent", "EvolveLauncher-UpdateChecker");
+                connection.setRequestProperty("User-Agent", "OrbitaLauncher-UpdateChecker");
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -197,6 +197,8 @@ public class UpdateManager {
                         String finalLatestVersion = latestVersion;
 
                         ((Activity) context).runOnUiThread(() -> {
+                            Activity act = (Activity) context;
+                            if (act.isFinishing() || act.isDestroyed()) return;
                             showUpdateDialog(finalLatestVersion, currentVersion, releaseNotes, finalDownloadUrl, finalFileName);
                         });
                     } else {
@@ -245,7 +247,7 @@ public class UpdateManager {
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
-                connection.setRequestProperty("User-Agent", "EvolveLauncher-UpdateChecker");
+                connection.setRequestProperty("User-Agent", "OrbitaLauncher-UpdateChecker");
 
                 int responseCode = connection.getResponseCode();
                 Log.d(TAG, "GitHub API response: " + responseCode);
@@ -570,10 +572,15 @@ public class UpdateManager {
      */
     public void downloadAndInstall(String downloadUrl) {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && !context.getPackageManager().canRequestPackageInstalls()) {
+                requestInstallPermission();
+                return;
+            }
             // Extract filename from URL
             String fileName = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
             if (!fileName.endsWith(".apk")) {
-                fileName = "EvolveLauncher-update.apk";
+                fileName = "OrbitaLauncher-update.apk";
             }
 
             Log.d(TAG, "Starting download: " + fileName);
