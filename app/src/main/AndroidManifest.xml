@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Internet permission for loading GitHub icons -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Quest specific permissions -->
+    <uses-permission android:name="com.oculus.permission.HAND_TRACKING" />
+    <uses-permission android:name="com.oculus.permission.EYE_TRACKING" />
+
+    <!-- Required for VR apps -->
+    <uses-feature android:name="android.hardware.vr.headtracking" android:version="1" android:required="true" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+
+    <!-- Uninstall Permissions -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- Query all packages permission for launcher functionality -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <!-- Storage permissions for custom background images -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- NEW: Boot completed permission for auto-start -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- For Android 11+ to launch from background -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Battery stats for status bar -->
+    <uses-permission android:name="android.permission.BATTERY_STATS" />
+
+    <!-- USAGE STAT -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- USED FOR SETTINGS BACKUP -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- NEW: For backup to /sdcard/ (Android 11+) -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+    <!-- Foreground service permissions (kept for future use) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Shizuku - for shell-level command execution -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Required for native Settings access on Android 11+ (Quest 3/Pro) -->
+        <package android:name="com.android.settings" />
+        <!-- Required for Shizuku integration -->
+        <package android:name="moe.shizuku.privileged.api" />
+        <provider android:authorities="moe.shizuku.privileged.api" />
+    </queries>
+
+    <application
+        android:requestLegacyExternalStorage="true"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Evolve_Launcher"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+
+        <!-- Main VR Launcher Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Orbita.Main"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density|uiMode"
+            android:persistableMode="persistNever">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- VR-specific metadata -->
+            <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
+            <meta-data android:name="com.oculus.forced3d" android:value="true" />
+
+            <!-- Quest panel sizing - Meta's standard launcher panel size -->
+            <layout
+                android:defaultWidth="1024dp"
+                android:defaultHeight="640dp"
+                android:minWidth="800dp"
+                android:minHeight="500dp"
+                android:gravity="center" />
+        </activity>
+
+        <activity
+            android:name=".PlaytimeStatsActivity"
+            android:theme="@style/Theme.Evolve_Launcher"
+            android:exported="false" />
+
+
+        <!-- Configuracoes: abre na MESMA janela do launcher (mesma task), sem painel novo -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Orbita.Screen"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density|uiMode"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+
+        <!-- Bundled Apps Installer Activity -->
+        <activity
+            android:name=".BundledAppsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Orbita.Screen"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+
+        <!-- App Manager - List sideloaded apps with clear data/cache buttons -->
+        <activity
+            android:name=".AppManagerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Orbita.Screen"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+
+        <activity
+            android:name=".DeviceInfoActivity"
+            android:theme="@style/Theme.Evolve_Launcher"
+            android:exported="false" />
+
+        <!-- App Change Receiver - MUST be exported to receive system broadcasts -->
+        <receiver
+            android:name=".AppChangeReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <!-- Detect when apps are installed -->
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <!-- Detect when apps are uninstalled -->
+                <action android:name="android.intent.action.PACKAGE_REMOVED" />
+                <!-- Detect when apps are updated -->
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <!-- Required to get the package name -->
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
+        <!-- NEW: Boot Receiver - Auto-start on device boot -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Accessibility service for hover-triggered launcher open.
+             Monitors hover/focus events on Quest's system UI packages
+             (vrshell, panel apps) so that hovering over the camera app
+             icon or library button opens Evolve Launcher.
+
+             User must enable this manually in Quest:
+                Settings -> Accessibility -> Evolve Launcher hover trigger -->
+        <service
+            android:name=".EvolveAccessibilityService"
+            android:exported="false"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/evolve_accessibility_config" />
+        </service>
+
+        <!-- FileProvider for APK installation -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Shizuku Provider - REQUIRED for Shizuku to connect to this app -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+    </application>
+
+</manifest>

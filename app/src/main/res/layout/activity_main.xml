@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tela principal: painel cinza com barra lateral (estilo biblioteca do Quest). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/panelCard"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="0dp"
+        android:tag="theme_ignore"
+        app:cardBackgroundColor="#3A3B3F"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <!-- BARRA LATERAL -->
+            <LinearLayout
+                android:id="@+id/sideNav"
+                android:layout_width="78dp"
+                android:layout_height="match_parent"
+                android:background="#2B2C2F"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="16dp"
+                android:paddingBottom="14dp"
+                android:tag="theme_ignore">
+
+
+            <ImageView
+                android:id="@+id/navAll"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginBottom="10dp"
+                android:padding="11dp"
+                android:background="@drawable/bg_nav_active"
+                android:clickable="true"
+                android:contentDescription="@string/main_cd_all_apps"
+                android:focusable="true"
+                android:src="@drawable/ic_apps"
+                app:tint="#2B2C2F" />
+
+            <ImageView
+                android:id="@+id/navCategories"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginBottom="10dp"
+                android:padding="11dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/main_cd_categories"
+                android:focusable="true"
+                android:src="@drawable/ic_nav_categories"
+                app:tint="#FFFFFF" />
+
+            <ImageView
+                android:id="@+id/navPlaytime"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginBottom="10dp"
+                android:padding="11dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/main_cd_playtime_stats"
+                android:focusable="true"
+                android:src="@drawable/ic_nav_timer"
+                app:tint="#FFFFFF" />
+
+
+
+            <ImageView
+                android:id="@+id/navDevice"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginBottom="10dp"
+                android:padding="11dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/main_cd_device_info"
+                android:focusable="true"
+                android:src="@drawable/ic_nav_info"
+                app:tint="#FFFFFF" />
+
+            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/navQuickSettings"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginBottom="10dp"
+                android:padding="11dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/main_cd_quick_settings"
+                android:focusable="true"
+                android:src="@drawable/ic_nav_tune"
+                app:tint="#FFFFFF" />
+
+            <ImageView
+                android:id="@+id/btnSettings"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:padding="11dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/main_cd_settings"
+                android:focusable="true"
+                android:src="@drawable/ic_settings"
+                android:tint="#4C8DFF" />
+
+            </LinearLayout>
+
+            <!-- CONTEUDO -->
+            <LinearLayout
+                android:clipChildren="false"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <!-- Linha de status: relogio centralizado | IP, Wi-Fi e bateria a direita -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="22dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="22dp">
+
+                    <TextView
+                        android:id="@+id/txtTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:fontFamily="sans-serif-medium"
+                        android:fontFeatureSettings="tnum"
+                        android:maxLines="1"
+                        android:tag="secondary"
+                        android:text="00:00:00"
+                        android:textColor="#CCCCCC"
+                        android:textSize="16sp" />
+
+                    <LinearLayout
+                        android:id="@+id/rightControls"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/ipWifiContainer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/txtIP"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="12dp"
+                                android:ellipsize="end"
+                                android:fontFamily="sans-serif-medium"
+                                android:maxLines="1"
+                                android:tag="accent"
+                                android:visibility="gone"
+                                android:text="IP 0.0.0.0"
+                                android:textColor="#6B8EFF"
+                                android:textSize="11sp" />
+
+                            <LinearLayout
+                                android:id="@+id/wifiContainer"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="12dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/wifiIcon"
+                                    android:layout_width="16sp"
+                                    android:layout_height="16sp"
+                                    android:layout_marginEnd="4dp"
+                                    android:src="@drawable/ic_wifi_full" />
+
+                                <TextView
+                                    android:id="@+id/txtWifiSignal"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:tag="muted"
+                                    android:text="@string/main_wifi_signal_full"
+                                    android:textColor="#888888"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/batteryContainer"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/batteryIcon"
+                                    android:layout_width="13sp"
+                                    android:layout_height="13sp"
+                                    android:layout_marginEnd="4dp"
+                                    android:src="@drawable/ic_battery_full"
+                                    android:tint="#9A9BA0" />
+
+                                <TextView
+                                    android:id="@+id/txtBattery"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:tag="muted"
+                                    android:text="100%"
+                                    android:textColor="#888888"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </FrameLayout>
+
+                <!-- Cabecalho: titulo | busca | categoria -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="22dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="22dp"
+                    android:paddingBottom="6dp">
+
+                    <TextView
+                        android:id="@+id/txtHeaderTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="1"
+                        android:text="@string/main_header_all"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:id="@+id/searchStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text=""
+                        android:textColor="#4CAF50"
+                        android:textSize="11sp"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/searchContainer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/search_background"
+                        android:gravity="center_vertical"
+                        android:minWidth="80dp"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="3dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="8dp"
+                            android:src="@drawable/ic_search"
+                            android:tint="#9A9BA0" />
+
+                        <EditText
+                            android:id="@+id/searchEditText"
+                            android:layout_width="130dp"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/transparent"
+                            android:hint="@string/main_search_hint"
+                            android:imeOptions="actionSearch"
+                            android:inputType="text"
+                            android:maxLines="1"
+                            android:textColor="#FFFFFF"
+                            android:textColorHint="#808080"
+                            android:textSize="13sp" />
+
+                        <ImageView
+                            android:id="@+id/clearSearch"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginStart="4dp"
+                            android:src="@drawable/ic_clear"
+                            android:tint="#808080"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <!-- Seletor de categoria (substitui a barra de baixo) -->
+                    <LinearLayout
+                        android:id="@+id/btnCategoryDropdown"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_dropdown"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="8dp">
+
+                        <TextView
+                            android:id="@+id/txtCategoryDropdown"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:fontFamily="sans-serif-medium"
+                            android:maxLines="1"
+                            android:maxWidth="150dp"
+                            android:text="@string/main_category_all_apps"
+                            android:textColor="#FFFFFF"
+                            android:textSize="13sp" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginStart="4dp"
+                            android:src="@drawable/ic_nav_expand"
+                            app:tint="#FFFFFF" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Grade de apps -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/appsGrid"
+                    android:clipChildren="false"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:clipToPadding="false"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:scrollbars="vertical" />
+
+                <!-- Barra de categorias original: fica oculta, mas continua sendo a fonte dos botoes
+                     (modo de edicao, mover apps entre categorias) -->
+                <HorizontalScrollView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:id="@+id/categoryBar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+
+                <TextView
+                    android:id="@+id/categoryTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Quick Settings Panel - Overlay on the right -->
+    <include
+        android:id="@+id/quickSettingsPanel"
+        layout="@layout/panel_quick_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end" />
+
+</FrameLayout>

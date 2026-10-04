@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shz_status_not_running">Shizuku is not running - set up wireless ADB on the Quest</string>
+    <string name="shz_status_need_permission">Tap to grant Shizuku permission</string>
+    <string name="shz_status_ready">Shizuku ready</string>
+    <string name="shz_setup_instructions">"QUEST SETUP - WIRELESS ADB:\n\n1. Open Orbita Settings > SYSTEM\n   - Tap \'Open\' next to Native Settings\n   - Android Settings will open\n\n2. In Android Settings:\n   - Go to \'About\'\n   - Tap \'Build number\' 7 times\n   - Developer mode enabled\n\n3. Go to Developer options\n   - Turn on \'Wireless debugging\'\n   - Tap the LEFT of the \'Wireless debugging\' text\n   - Choose \'Pair device with pairing code\'\n   - Note the IP, port and pairing code\n\n4. Open the Shizuku app on the Quest\n   - Use the pairing code to connect\n   - Start the Shizuku server\n\n5. Reopen Orbita and grant permission\n\nAfter setup, commands run with shell privileges."</string>
+</resources>

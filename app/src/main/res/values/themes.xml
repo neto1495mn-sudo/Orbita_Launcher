@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Evolve_Launcher" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#6B8EFF</item>
+        <item name="colorPrimaryVariant">#4A6AFF</item>
+        <item name="colorOnPrimary">@color/white</item>
+    </style>
+
+    <!-- Tela principal: janela translucida, para a opacidade do fundo mostrar o ambiente em vez de preto -->
+    <style name="Theme.Orbita.Main" parent="Theme.Evolve_Launcher">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">false</item>
+    </style>
+
+    <!-- Telas internas (Configuracoes, Gerenciador, Apps incluidos): ocupam a janela inteira, sem dialogo flutuante -->
+    <style name="Theme.Orbita.Screen" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/orbita_screen</item>
+        <item name="colorPrimary">#4C8DFF</item>
+        <item name="colorAccent">#4C8DFF</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

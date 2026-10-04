@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shz_status_not_running">O Shizuku não está em execução - configure o ADB sem fio no Quest</string>
+    <string name="shz_status_need_permission">Toque para conceder a permissão do Shizuku</string>
+    <string name="shz_status_ready">Shizuku pronto</string>
+    <string name="shz_setup_instructions">"CONFIGURAÇÃO DO QUEST - ADB SEM FIO:\n\n1. Abra Configurações do Orbita > SISTEMA\n   - Toque em \'Abrir\' ao lado de Configurações nativas\n   - As configurações do Android vão abrir\n\n2. Nas configurações do Android:\n   - Vá em \'Sobre\'\n   - Toque 7 vezes em \'Número da versão\'\n   - Modo desenvolvedor ativado\n\n3. Vá em Opções do desenvolvedor\n   - Ative \'Depuração sem fio\'\n   - Toque à ESQUERDA do texto \'Depuração sem fio\'\n   - Escolha \'Parear dispositivo com código de pareamento\'\n   - Anote o IP, a porta e o código de pareamento\n\n4. Abra o app Shizuku no Quest\n   - Use o código de pareamento para conectar\n   - Inicie o servidor do Shizuku\n\n5. Reabra o Orbita e conceda a permissão\n\nDepois da configuração, os comandos rodam com privilégios de shell."</string>
+</resources>

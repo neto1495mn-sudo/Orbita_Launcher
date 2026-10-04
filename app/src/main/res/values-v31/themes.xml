@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+: abertura sem logo, so a cor do painel -->
+    <style name="Theme.Evolve_Launcher" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#6B8EFF</item>
+        <item name="colorPrimaryVariant">#4A6AFF</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowSplashScreenBackground">@color/orbita_screen</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_empty</item>
+    </style>
+</resources>

@@ -1,0 +1,777 @@
+package com.neto.orbitalauncher;
+
+import android.app.Activity;
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.Settings;
+import android.util.Log;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class UpdateManager {
+
+    private static final String TAG = "UpdateManager";
+    private static final String PREFS_NAME = "VRLPrefs";
+    private static final String KEY_AUTO_UPDATE_CHECK = "auto_update_check";
+    private static final String KEY_LAST_UPDATE_CHECK = "last_update_check";
+    private static final String KEY_UPDATE_FREQUENCY = "update_frequency"; // hours
+
+    // IMPORTANT: Replace with your GitHub username and repository name
+    private static final String GITHUB_API_URL = "https://api.github.com/repos/neto1495mn-sudo/Orbita_Launcher/releases/latest";
+
+    private final Context context;
+    private final SharedPreferences prefs;
+    private final ExecutorService executor;
+    private long downloadId = -1;
+    private BroadcastReceiver downloadReceiver;
+
+    public UpdateManager(Context context) {
+        this.context = context;
+        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.executor = Executors.newSingleThreadExecutor();
+    }
+
+    /**
+     * Check if auto-update is enabled
+     */
+    public boolean isAutoUpdateEnabled() {
+        return prefs.getBoolean(KEY_AUTO_UPDATE_CHECK, true);
+    }
+
+    /**
+     * Enable or disable auto-update
+     */
+    public void setAutoUpdateEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_AUTO_UPDATE_CHECK, enabled).apply();
+    }
+
+    /**
+     * Get update frequency in hours
+     */
+    public int getUpdateFrequency() {
+        return prefs.getInt(KEY_UPDATE_FREQUENCY, 24); // Default: check once per day
+    }
+
+    /**
+     * Set update frequency in hours
+     */
+    public void setUpdateFrequency(int hours) {
+        prefs.edit().putInt(KEY_UPDATE_FREQUENCY, hours).apply();
+    }
+
+    /**
+     * Check if it's time to check for updates based on frequency setting
+     */
+    public boolean shouldCheckForUpdates() {
+        if (!isAutoUpdateEnabled()) {
+            return false;
+        }
+
+        long lastCheck = prefs.getLong(KEY_LAST_UPDATE_CHECK, 0);
+        long currentTime = System.currentTimeMillis();
+        long frequencyMillis = getUpdateFrequency() * 60 * 60 * 1000L;
+
+        return (currentTime - lastCheck) > frequencyMillis;
+    }
+
+    /**
+     * Mark that we've checked for updates
+     */
+    private void markUpdateChecked() {
+        prefs.edit().putLong(KEY_LAST_UPDATE_CHECK, System.currentTimeMillis()).apply();
+    }
+
+    /**
+     * Get current app version name
+     */
+    public String getCurrentVersion() {
+        try {
+            PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            return pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "Could not get version name", e);
+            return context.getString(R.string.upd_unknown);
+        }
+    }
+
+    /**
+     * Get current app version code
+     */
+    public int getCurrentVersionCode() {
+        try {
+            PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return (int) pInfo.getLongVersionCode();
+            } else {
+                return pInfo.versionCode;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "Could not get version code", e);
+            return 0;
+        }
+    }
+
+    /**
+     * Check for updates in the background
+     * @param showToastIfNoUpdate Show a toast message even if there's no update
+     */
+    public void checkForUpdates(boolean showToastIfNoUpdate) {
+        executor.execute(() -> {
+            try {
+                markUpdateChecked();
+
+                URL url = new URL(GITHUB_API_URL);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+
+                // GitHub API requires User-Agent header
+                connection.setRequestProperty("User-Agent", "EvolveLauncher-UpdateChecker");
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JSONObject release = new JSONObject(response.toString());
+                    String latestVersion = release.getString("tag_name").replaceAll("[^0-9.]", "");
+                    String currentVersion = getCurrentVersion().replaceAll("[^0-9.]", "");
+
+                    Log.d(TAG, "Current version: " + currentVersion + ", Latest version: " + latestVersion);
+
+                    // Find the APK asset in the release
+                    JSONArray assets = release.getJSONArray("assets");
+                    String downloadUrl = null;
+                    String fileName = null;
+
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject asset = assets.getJSONObject(i);
+                        String name = asset.getString("name");
+                        if (name.endsWith(".apk")) {
+                            downloadUrl = asset.getString("browser_download_url");
+                            fileName = name;
+                            break;
+                        }
+                    }
+
+                    if (downloadUrl == null) {
+                        showErrorOnMainThread(context.getString(R.string.upd_no_apk_release));
+                        return;
+                    }
+
+                    // Compare versions
+                    if (compareVersions(latestVersion, currentVersion) > 0) {
+                        // New version available
+                        String releaseNotes = release.optString("body", context.getString(R.string.upd_no_notes));
+                        String finalDownloadUrl = downloadUrl;
+                        String finalFileName = fileName;
+                        String finalLatestVersion = latestVersion;
+
+                        ((Activity) context).runOnUiThread(() -> {
+                            showUpdateDialog(finalLatestVersion, currentVersion, releaseNotes, finalDownloadUrl, finalFileName);
+                        });
+                    } else {
+                        // No update available
+                        if (showToastIfNoUpdate) {
+                            ((Activity) context).runOnUiThread(() -> {
+                                Toast.makeText(context, R.string.upd_already_latest, Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                        Log.d(TAG, "No update available");
+                    }
+                } else {
+                    showErrorOnMainThread(context.getString(R.string.upd_check_failed_http, responseCode));
+                }
+
+                connection.disconnect();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error checking for updates", e);
+                showErrorOnMainThread(context.getString(R.string.upd_check_error, e.getMessage()));
+            }
+        });
+    }
+
+    /**
+     * Check for updates with callback (for SettingsActivity)
+     */
+    public void checkForUpdates(UpdateCallback callback) {
+        executor.execute(() -> {
+            try {
+                markUpdateChecked();
+
+                // Get current version
+                String currentVersion = getCurrentVersion().replaceAll("[^0-9.]", "");
+
+                // Check if GitHub URL is configured
+                if (GITHUB_API_URL.contains("YOUR_USERNAME") || GITHUB_API_URL.contains("YOUR_REPO")) {
+                    ((Activity) context).runOnUiThread(() -> {
+                        callback.onError(context.getString(R.string.upd_not_configured));
+                    });
+                    return;
+                }
+
+                URL url = new URL(GITHUB_API_URL);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+                connection.setRequestProperty("User-Agent", "EvolveLauncher-UpdateChecker");
+
+                int responseCode = connection.getResponseCode();
+                Log.d(TAG, "GitHub API response: " + responseCode);
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JSONObject release = new JSONObject(response.toString());
+                    String latestVersion = release.getString("tag_name").replaceAll("[^0-9.]", "");
+                    String releaseNotes = release.optString("body", context.getString(R.string.upd_no_notes));
+
+                    Log.d(TAG, "Current: " + currentVersion + ", Latest: " + latestVersion);
+
+                    // Find the APK asset
+                    JSONArray assets = release.getJSONArray("assets");
+                    String downloadUrl = null;
+
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject asset = assets.getJSONObject(i);
+                        String name = asset.getString("name");
+                        if (name.endsWith(".apk")) {
+                            downloadUrl = asset.getString("browser_download_url");
+                            break;
+                        }
+                    }
+
+                    if (downloadUrl == null) {
+                        final String errorMsg = context.getString(R.string.upd_no_apk_github);
+                        ((Activity) context).runOnUiThread(() -> callback.onError(errorMsg));
+                        return;
+                    }
+
+                    final String finalDownloadUrl = downloadUrl;
+                    final String finalLatestVersion = latestVersion;
+                    final String finalReleaseNotes = releaseNotes;
+
+                    // Compare versions
+                    if (compareVersions(latestVersion, currentVersion) > 0) {
+                        // New version available
+                        ((Activity) context).runOnUiThread(() -> {
+                            callback.onUpdateAvailable(finalLatestVersion, finalDownloadUrl, finalReleaseNotes);
+                        });
+                    } else {
+                        // No update available
+                        ((Activity) context).runOnUiThread(() -> {
+                            callback.onNoUpdateAvailable(currentVersion);
+                        });
+                    }
+                } else {
+                    final String errorMsg = context.getString(R.string.upd_check_failed_http, responseCode);
+                    ((Activity) context).runOnUiThread(() -> callback.onError(errorMsg));
+                }
+
+                connection.disconnect();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error checking for updates", e);
+                final String errorMsg = context.getString(R.string.upd_check_error, e.getMessage());
+                ((Activity) context).runOnUiThread(() -> callback.onError(errorMsg));
+            }
+        });
+    }
+
+    /**
+     * Compare two version strings
+     * @return positive if v1 > v2, negative if v1 < v2, 0 if equal
+     */
+    private int compareVersions(String v1, String v2) {
+        String[] parts1 = v1.split("\\.");
+        String[] parts2 = v2.split("\\.");
+
+        int maxLength = Math.max(parts1.length, parts2.length);
+
+        for (int i = 0; i < maxLength; i++) {
+            int num1 = i < parts1.length ? parseVersionPart(parts1[i]) : 0;
+            int num2 = i < parts2.length ? parseVersionPart(parts2[i]) : 0;
+
+            if (num1 != num2) {
+                return num1 - num2;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Parse a version part, extracting only the numeric portion
+     */
+    private int parseVersionPart(String part) {
+        try {
+            // Extract only digits from the start of the string
+            StringBuilder numStr = new StringBuilder();
+            for (char c : part.toCharArray()) {
+                if (Character.isDigit(c)) {
+                    numStr.append(c);
+                } else {
+                    break;
+                }
+            }
+            return numStr.length() > 0 ? Integer.parseInt(numStr.toString()) : 0;
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Show update dialog with release information
+     */
+    private void showUpdateDialog(String newVersion, String currentVersion, String releaseNotes, String downloadUrl, String fileName) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.upd_dialog_title);
+
+        // Build a custom view with scrollable, markdown-rendered release notes
+        android.widget.LinearLayout container = new android.widget.LinearLayout(context);
+        container.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int padding = (int) (16 * context.getResources().getDisplayMetrics().density);
+        container.setPadding(padding, padding, padding, padding);
+
+        // Version info at top
+        android.widget.TextView versionInfo = new android.widget.TextView(context);
+        versionInfo.setText(context.getString(R.string.upd_version_info, currentVersion, newVersion));
+        versionInfo.setTextSize(13);
+        versionInfo.setPadding(0, 0, 0, padding);
+        versionInfo.setTypeface(null, android.graphics.Typeface.BOLD);
+        container.addView(versionInfo);
+
+        // Release notes (markdown rendered to HTML)
+        android.widget.TextView notesView = new android.widget.TextView(context);
+        notesView.setTextSize(12);
+        notesView.setLineSpacing(0, 1.2f);
+        notesView.setTextIsSelectable(true);
+        String html = (releaseNotes == null || releaseNotes.isEmpty())
+                ? "<i>" + escapeHtml(context.getString(R.string.upd_no_notes)) + "</i>"
+                : markdownToHtml(releaseNotes);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            notesView.setText(android.text.Html.fromHtml(html, android.text.Html.FROM_HTML_MODE_COMPACT));
+        } else {
+            notesView.setText(android.text.Html.fromHtml(html));
+        }
+        notesView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+
+        // Wrap in scroll view since release notes can be long
+        android.widget.ScrollView scroll = new android.widget.ScrollView(context);
+        scroll.addView(notesView);
+        // Limit height to 60% of screen so dialog isn't huge
+        int maxHeight = (int) (context.getResources().getDisplayMetrics().heightPixels * 0.6);
+        scroll.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, maxHeight));
+        container.addView(scroll);
+
+        builder.setView(container);
+        builder.setCancelable(true);
+
+        builder.setPositiveButton(R.string.upd_download_install, (dialog, which) -> {
+            // Check if we can install from unknown sources
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (!context.getPackageManager().canRequestPackageInstalls()) {
+                    // Need to request permission
+                    requestInstallPermission();
+                    return;
+                }
+            }
+            downloadAndInstallUpdate(downloadUrl, fileName);
+        });
+
+        builder.setNegativeButton(R.string.upd_later, (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        builder.setNeutralButton(R.string.upd_skip_version, (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        builder.show();
+    }
+
+    /**
+     * Convert GitHub-flavored markdown to HTML for display in any dialog.
+     * Public static so SettingsActivity (and other classes) can use it too.
+     * Handles: headers, bold, italic, inline code, code blocks, lists, horizontal rules, line breaks.
+     */
+    public static String markdownToHtml(String markdown) {
+        if (markdown == null || markdown.isEmpty()) {
+            return "<i>No release notes available</i>";
+        }
+
+        StringBuilder html = new StringBuilder();
+        String[] lines = markdown.split("\n");
+        boolean inCodeBlock = false;
+        boolean inList = false;
+
+        for (String line : lines) {
+            // Code block fence
+            if (line.trim().startsWith("```")) {
+                if (inCodeBlock) {
+                    html.append("</pre>");
+                    inCodeBlock = false;
+                } else {
+                    if (inList) { html.append("</ul>"); inList = false; }
+                    html.append("<pre style=\"background:#222;padding:6px;\">");
+                    inCodeBlock = true;
+                }
+                continue;
+            }
+
+            if (inCodeBlock) {
+                html.append(escapeHtml(line)).append("<br>");
+                continue;
+            }
+
+            String trimmed = line.trim();
+
+            // Horizontal rule
+            if (trimmed.equals("---") || trimmed.equals("***") || trimmed.equals("___")) {
+                if (inList) { html.append("</ul>"); inList = false; }
+                html.append("<br><hr><br>");
+                continue;
+            }
+
+            // Headers (must be after trimming)
+            if (trimmed.startsWith("### ")) {
+                if (inList) { html.append("</ul>"); inList = false; }
+                html.append("<br><big><b>").append(inlineFormat(trimmed.substring(4))).append("</b></big><br>");
+                continue;
+            }
+            if (trimmed.startsWith("## ")) {
+                if (inList) { html.append("</ul>"); inList = false; }
+                html.append("<br><big><big><b>").append(inlineFormat(trimmed.substring(3))).append("</b></big></big><br>");
+                continue;
+            }
+            if (trimmed.startsWith("# ")) {
+                if (inList) { html.append("</ul>"); inList = false; }
+                html.append("<br><big><big><big><b>").append(inlineFormat(trimmed.substring(2))).append("</b></big></big></big><br>");
+                continue;
+            }
+
+            // List items
+            if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+                if (!inList) {
+                    html.append("<ul>");
+                    inList = true;
+                }
+                html.append("<li>").append(inlineFormat(trimmed.substring(2))).append("</li>");
+                continue;
+            }
+
+            // Empty line
+            if (trimmed.isEmpty()) {
+                if (inList) { html.append("</ul>"); inList = false; }
+                html.append("<br>");
+                continue;
+            }
+
+            // Regular paragraph
+            if (inList) { html.append("</ul>"); inList = false; }
+            html.append(inlineFormat(trimmed)).append("<br>");
+        }
+
+        if (inList) html.append("</ul>");
+        if (inCodeBlock) html.append("</pre>");
+
+        return html.toString();
+    }
+
+    /**
+     * Handle inline markdown formatting: **bold**, *italic*, `code`, [links](url)
+     */
+    private static String inlineFormat(String text) {
+        if (text == null) return "";
+        String result = text;
+
+        // Inline code first (before bold/italic to protect content)
+        result = result.replaceAll("`([^`]+)`", "<code style=\"background:#333;\">$1</code>");
+
+        // Bold: **text**
+        result = result.replaceAll("\\*\\*([^*]+)\\*\\*", "<b>$1</b>");
+
+        // Italic: *text* (only if not already consumed by bold)
+        result = result.replaceAll("(?<![*])\\*([^*]+)\\*(?![*])", "<i>$1</i>");
+
+        // Links: [text](url)
+        result = result.replaceAll("\\[([^\\]]+)\\]\\(([^)]+)\\)", "<a href=\"$2\">$1</a>");
+
+        return result;
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
+    /**
+     * Request permission to install packages from unknown sources (Android 8+)
+     */
+    private void requestInstallPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!context.getPackageManager().canRequestPackageInstalls()) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle(R.string.upd_permission_title);
+                builder.setMessage(R.string.upd_permission_message);
+                builder.setPositiveButton(R.string.upd_open_settings, (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                    intent.setData(Uri.parse("package:" + context.getPackageName()));
+                    context.startActivity(intent);
+                });
+                builder.setNegativeButton(R.string.upd_cancel, null);
+                builder.show();
+            }
+        }
+    }
+
+    /**
+     * Download and install update from URL (public wrapper for SettingsActivity)
+     */
+    public void downloadAndInstall(String downloadUrl) {
+        try {
+            // Extract filename from URL
+            String fileName = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
+            if (!fileName.endsWith(".apk")) {
+                fileName = "EvolveLauncher-update.apk";
+            }
+
+            Log.d(TAG, "Starting download: " + fileName);
+
+            // Call the private method with both parameters
+            downloadAndInstallUpdate(downloadUrl, fileName);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error in downloadAndInstall", e);
+            Toast.makeText(context, context.getString(R.string.upd_error_starting_download, e.getMessage()), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Download and install the update
+     */
+    private void downloadAndInstallUpdate(String downloadUrl, String fileName) {
+        try {
+            // Create downloads directory if it doesn't exist
+            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File outputFile = new File(downloadsDir, fileName);
+
+            // Delete old file if exists
+            if (outputFile.exists()) {
+                outputFile.delete();
+            }
+
+            // Start download using DownloadManager
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadUrl));
+            request.setTitle(context.getString(R.string.upd_notification_title));
+            request.setDescription(context.getString(R.string.upd_notification_desc, fileName));
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+            request.setMimeType("application/vnd.android.package-archive");
+
+            DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+            downloadId = downloadManager.enqueue(request);
+
+            Toast.makeText(context, R.string.upd_downloading, Toast.LENGTH_SHORT).show();
+
+            // Register receiver to handle download completion
+            registerDownloadReceiver(fileName);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error downloading update", e);
+            Toast.makeText(context, context.getString(R.string.upd_error_downloading, e.getMessage()), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Register broadcast receiver for download completion
+     */
+    private void registerDownloadReceiver(String fileName) {
+        if (downloadReceiver != null) {
+            try {
+                context.unregisterReceiver(downloadReceiver);
+            } catch (Exception e) {
+                // Ignore if not registered
+            }
+        }
+
+        downloadReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+
+                if (id == downloadId) {
+                    // Download completed
+                    DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+
+                    // Check download status
+                    DownloadManager.Query query = new DownloadManager.Query();
+                    query.setFilterById(id);
+                    Cursor cursor = downloadManager.query(query);
+
+                    if (cursor.moveToFirst()) {
+                        int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                        int status = cursor.getInt(statusIndex);
+
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            // Install the APK
+                            installApk(fileName);
+                        } else {
+                            Toast.makeText(context, R.string.upd_download_failed, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    cursor.close();
+
+                    // Unregister receiver
+                    try {
+                        context.unregisterReceiver(this);
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        // Android 14+ (API 34) requires RECEIVER_EXPORTED for system broadcasts
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(downloadReceiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(downloadReceiver, filter);
+        }
+    }
+
+    /**
+     * Install the downloaded APK
+     */
+    private void installApk(String fileName) {
+        try {
+            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File apkFile = new File(downloadsDir, fileName);
+
+            if (!apkFile.exists()) {
+                Toast.makeText(context, R.string.upd_apk_not_found, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                // Use FileProvider for Android 7+
+                // Authority must match AndroidManifest.xml FileProvider declaration
+                Uri apkUri = FileProvider.getUriForFile(context,
+                        context.getPackageName() + ".fileprovider", apkFile);
+                intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            } else {
+                intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
+            }
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+
+            Toast.makeText(context, R.string.upd_installing, Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error installing APK", e);
+            Toast.makeText(context, context.getString(R.string.upd_error_installing, e.getMessage()), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Show error message on main thread
+     */
+    private void showErrorOnMainThread(String message) {
+        if (context instanceof Activity) {
+            ((Activity) context).runOnUiThread(() -> {
+                Log.e(TAG, message);
+                // Optionally show toast for errors
+                // Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    /**
+     * Clean up resources
+     */
+    public void cleanup() {
+        if (downloadReceiver != null) {
+            try {
+                context.unregisterReceiver(downloadReceiver);
+            } catch (Exception e) {
+                // Ignore if not registered
+            }
+            downloadReceiver = null;
+        }
+
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdown();
+        }
+    }
+
+    /**
+     * Callback interface for update checks
+     */
+    public interface UpdateCallback {
+        /**
+         * Called when a new update is available
+         * @param version New version number
+         * @param downloadUrl URL to download the update
+         * @param releaseNotes Release notes for the update
+         */
+        void onUpdateAvailable(String version, String downloadUrl, String releaseNotes);
+
+        /**
+         * Called when no update is available
+         * @param currentVersion Current app version
+         */
+        void onNoUpdateAvailable(String currentVersion);
+
+        /**
+         * Called when an error occurs during update check
+         * @param error Error message
+         */
+        void onError(String error);
+    }
+}

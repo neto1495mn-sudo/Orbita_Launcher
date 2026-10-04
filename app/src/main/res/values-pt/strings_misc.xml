@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_icon">Ícone do app</string>
+    <string name="auto_restart_title">Reiniciar launcher automaticamente</string>
+    <string name="auto_restart_summary">Reabre o launcher automaticamente ao voltar para a tela inicial do Quest</string>
+    <string name="auto_restart_enabled">Reinício automático ATIVADO - o launcher será reaberto automaticamente</string>
+    <string name="auto_restart_disabled">Reinício automático DESATIVADO - o launcher permanece fechado</string>
+    <string name="accessibility_service_label">Gatilho por passagem do Orbita Launcher</string>
+    <string name="accessibility_service_description">Permite abrir o Orbita Launcher ao passar o cursor sobre o ícone do app da câmera no vrshell ou sobre o botão da biblioteca nos apps em painel. Nenhum dado é coletado; o serviço só reage a eventos específicos de passagem na interface para abrir o Orbita Launcher.</string>
+</resources>

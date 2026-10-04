@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Orbita Launcher</string>
+    <string name="app_icon">App icon</string>
+
+    <!-- Auto-Restart Feature -->
+    <string name="auto_restart_title">Auto-Restart Launcher</string>
+    <string name="auto_restart_summary">Automatically reopen launcher when returning to Quest home</string>
+    <string name="auto_restart_enabled">Auto-restart is ON - Launcher will reopen automatically</string>
+    <string name="auto_restart_disabled">Auto-restart is OFF - Launcher stays closed</string>
+
+    <!-- Accessibility Service — Hover to Open Launcher -->
+    <string name="accessibility_service_label">Orbita Launcher hover trigger</string>
+    <string name="accessibility_service_description">Lets you open Orbita Launcher by hovering over the camera app icon in vrshell or the library button in panel apps. No data is collected; the service only reacts to specific UI hover events to launch Orbita Launcher.</string>
+</resources>
