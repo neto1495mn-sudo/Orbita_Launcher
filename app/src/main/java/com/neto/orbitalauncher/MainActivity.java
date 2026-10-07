@@ -577,23 +577,28 @@ public class MainActivity extends AppCompatActivity {
 
         startStatusUpdates();
 
-        // Atualizacao automatica: confere o GitHub de tempos em tempos (se ligada em Configuracoes)
-        appsGrid.postDelayed(() -> {
-            try {
-                if (isFinishing() || isDestroyed()) return;
-                UpdateManager um = new UpdateManager(MainActivity.this);
-                if (um.shouldCheckForUpdates()) um.checkForUpdates(false);
-            } catch (Exception e) {
-                Log.e("MainActivity", "auto update check failed", e);
-            }
-        }, 8000);
-
         // Setup Quick Settings panel (volume only)
         setupQuickSettings();
 
         // Apply current theme to entire view hierarchy
         View rootView = findViewById(android.R.id.content);
         ThemeApplier.applyThemeToHierarchy(rootView);
+    }
+
+    private final Runnable autoUpdateCheck = () -> {
+        try {
+            if (isFinishing() || isDestroyed()) return;
+            UpdateManager um = new UpdateManager(MainActivity.this);
+            if (um.shouldCheckForUpdates()) um.checkForUpdates(false);
+        } catch (Exception e) {
+            Log.e("MainActivity", "auto update check failed", e);
+        }
+    };
+
+    private void scheduleAutoUpdateCheck() {
+        if (appsGrid == null) return;
+        appsGrid.removeCallbacks(autoUpdateCheck);
+        appsGrid.postDelayed(autoUpdateCheck, 8000);
     }
 
     // ===== QUICK SETTINGS METHODS =====
@@ -4356,6 +4361,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // Atualizacao automatica: toda vez que o launcher volta para a tela, confere o GitHub
+        // (no maximo uma vez por dia, e so se estiver ligada em Configuracoes)
+        scheduleAutoUpdateCheck();
 
         // Force compositor refresh when returning from a game.
         // Simulates the screen off/on that fixes the loading overlay
