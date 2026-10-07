@@ -38,7 +38,7 @@
     <string name="mgr_follow_installer">Siga as instruções do instalador...</string>
     <string name="mgr_installer_failed">Falha ao iniciar o instalador</string>
     <string name="mgr_install_dialog_title">Instalar o Shizuku</string>
-    <string name="mgr_install_dialog_message">O Shizuku é necessário para limpar os dados e o cache dos apps.\n\n- O APK do Shizuku já vem incluído no Orbita\n- Instalação com um toque - sem downloads\n- Gratuito e de código aberto\n\nDeseja instalá-lo agora?</string>
+    <string name="mgr_install_dialog_message">O Shizuku é necessário para limpar os dados e o cache dos apps.\n\n- Baixado da página oficial do Shizuku no GitHub\n- Gratuito e de código aberto\n\nDeseja instalá-lo agora?</string>
     <string name="mgr_not_running_title">Shizuku não está em execução</string>
     <string name="mgr_not_running_message">O Shizuku está instalado, mas o servidor não está em execução.\n\nAbra o Shizuku e inicie o servidor.</string>
     <string name="mgr_permission_title">Permissão necessária</string>
@@ -139,9 +139,9 @@
     <string name="upd_open_settings">Abrir configurações</string>
     <string name="upd_cancel">Cancelar</string>
     <string name="upd_error_starting_download">Erro ao iniciar o download: %1$s</string>
-    <string name="upd_notification_title">Atualização do Orbita Launcher</string>
+    <string name="upd_notification_title">Orbita Launcher</string>
     <string name="upd_notification_desc">Baixando %1$s</string>
-    <string name="upd_downloading">Baixando atualização...</string>
+    <string name="upd_downloading">Baixando...</string>
     <string name="upd_error_downloading">Erro ao baixar a atualização: %1$s</string>
     <string name="upd_download_failed">Falha no download</string>
     <string name="upd_apk_not_found">Arquivo APK não encontrado</string>

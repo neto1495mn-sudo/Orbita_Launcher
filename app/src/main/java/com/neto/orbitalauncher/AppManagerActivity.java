@@ -327,21 +327,14 @@ public class AppManagerActivity extends AppCompatActivity implements ShizukuMana
         ShizukuInstaller.InstallStatus status = installer.getStatus();
 
         if (status == ShizukuInstaller.InstallStatus.NOT_INSTALLED) {
-            // Not installed - Red, install via bundled APK
+            // Not installed - Red, install (bundled APK or download from GitHub)
             shizukuBanner.setVisibility(View.VISIBLE);
             shizukuBanner.setBackgroundColor(android.graphics.Color.parseColor("#3D1A1A"));
             txtShizukuStatus.setText(getString(R.string.mgr_banner_not_installed));
             btnShizukuAction.setText(R.string.mgr_install);
             btnShizukuAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
                     android.graphics.Color.parseColor("#F44336")));
-            btnShizukuAction.setOnClickListener(v -> {
-                boolean started = installer.installShizuku();
-                if (started) {
-                    Toast.makeText(this, R.string.mgr_follow_installer, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(this, R.string.mgr_installer_failed, Toast.LENGTH_LONG).show();
-                }
-            });
+            btnShizukuAction.setOnClickListener(v -> installer.installShizuku(this));
         } else if (status == ShizukuInstaller.InstallStatus.INSTALLED_NOT_RUNNING) {
             // Installed but not running - Orange, open Shizuku app
             shizukuBanner.setVisibility(View.VISIBLE);
@@ -388,14 +381,7 @@ public class AppManagerActivity extends AppCompatActivity implements ShizukuMana
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.mgr_install_dialog_title)
                             .setMessage(R.string.mgr_install_dialog_message)
-                            .setPositiveButton(R.string.mgr_install, (d, w) -> {
-                                boolean started = installer.installShizuku();
-                                if (started) {
-                                    Toast.makeText(this, R.string.mgr_follow_installer, Toast.LENGTH_LONG).show();
-                                } else {
-                                    Toast.makeText(this, R.string.mgr_installer_failed, Toast.LENGTH_LONG).show();
-                                }
-                            })
+                            .setPositiveButton(R.string.mgr_install, (d, w) -> installer.installShizuku(this))
                             .setNegativeButton(R.string.mgr_cancel, null)
                             .create()
             );

@@ -1,28 +1,40 @@
 package com.neto.orbitalauncher;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
- * Manages Shizuku APK installation from bundled assets
- * Allows users to install Shizuku without external downloads
+ * Manages Shizuku APK installation: from bundled assets if present,
+ * otherwise downloaded from the official Shizuku GitHub releases
  */
 public class ShizukuInstaller {
     private static final String TAG = "ShizukuInstaller";
     private static final String SHIZUKU_PACKAGE = "moe.shizuku.privileged.api";
     private static final String SHIZUKU_APK_ASSET = "shizuku.apk";
     private static final String SHIZUKU_APK_FILENAME = "shizuku-bundled.apk";
+    // Releases oficiais do Shizuku no GitHub (usadas quando o APK nao vem embutido no Orbita)
+    private static final String SHIZUKU_RELEASES_API = "https://api.github.com/repos/RikkaApps/Shizuku/releases/latest";
+    private static final String SHIZUKU_DOWNLOAD_PAGE = "https://shizuku.rikka.app/download/";
 
     private final Context context;
 
@@ -158,6 +170,68 @@ public class ShizukuInstaller {
     }
 
     /**
+     * Instala o Shizuku: usa o APK embutido se existir; senao baixa a versao mais nova
+     * das releases oficiais do Shizuku no GitHub e abre o instalador do sistema.
+     * Se o download nao for encontrado, abre a pagina oficial de download no navegador.
+     */
+    public void installShizuku(Activity activity) {
+        if (isShizukuApkBundled()) {
+            boolean started = installShizuku();
+            Toast.makeText(activity, started ? R.string.set_toast_follow_installer : R.string.set_toast_installer_fail,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Toast.makeText(activity, R.string.set_toast_shizuku_downloading, Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            String apkUrl = null;
+            try {
+                HttpURLConnection connection = (HttpURLConnection) new URL(SHIZUKU_RELEASES_API).openConnection();
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+                connection.setRequestProperty("User-Agent", "OrbitaLauncher-ShizukuInstaller");
+                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    StringBuilder response = new StringBuilder();
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) response.append(line);
+                    }
+                    JSONArray assets = new JSONObject(response.toString()).getJSONArray("assets");
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject asset = assets.getJSONObject(i);
+                        if (asset.getString("name").endsWith(".apk")) {
+                            apkUrl = asset.getString("browser_download_url");
+                            break;
+                        }
+                    }
+                }
+                connection.disconnect();
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to look up the latest Shizuku release", e);
+            }
+
+            final String finalUrl = apkUrl;
+            activity.runOnUiThread(() -> {
+                if (activity.isFinishing() || activity.isDestroyed()) return;
+                if (finalUrl != null) {
+                    new UpdateManager(activity).downloadAndInstall(finalUrl, "shizuku.apk");
+                } else {
+                    Toast.makeText(activity, R.string.set_toast_shizuku_download_fail, Toast.LENGTH_LONG).show();
+                    openDownloadPage(activity);
+                }
+            });
+        }).start();
+    }
+
+    private void openDownloadPage(Activity activity) {
+        try {
+            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(SHIZUKU_DOWNLOAD_PAGE)));
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to open Shizuku download page", e);
+        }
+    }
+
+    /**
      * Check if Shizuku is running (binder available)
      */
     public boolean isShizukuRunning() {
@@ -192,9 +266,6 @@ public class ShizukuInstaller {
      * Get installation status as enum
      */
     public InstallStatus getStatus() {
-        if (!isShizukuApkBundled()) {
-            return InstallStatus.NOT_BUNDLED;
-        }
         if (!isShizukuInstalled()) {
             return InstallStatus.NOT_INSTALLED;
         }
@@ -205,7 +276,6 @@ public class ShizukuInstaller {
     }
 
     public enum InstallStatus {
-        NOT_BUNDLED,           // APK not bundled in assets
         NOT_INSTALLED,         // Shizuku app not installed
         INSTALLED_NOT_RUNNING, // Installed but server not started
         RUNNING                // Fully ready to use

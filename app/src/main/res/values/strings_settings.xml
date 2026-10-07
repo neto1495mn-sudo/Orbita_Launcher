@@ -150,7 +150,7 @@
     <string name="set_toast_all_categories_deleted">All categories were deleted</string>
     <string name="set_toast_no_update">No update available for now</string>
     <string name="set_shizuku_install_title">Install Shizuku</string>
-    <string name="set_shizuku_install_message">Shizuku is required for advanced Quest features like resetting the UI.\n\nThe Shizuku APK is already bundled with Orbita\nOne-tap install - no downloads needed\nFree and open source\n\nWould you like to install it now?</string>
+    <string name="set_shizuku_install_message">Shizuku is required for advanced Quest features like resetting the UI.\n\nOrbita will download the latest version from the official Shizuku page on GitHub and open the installer.\nFree and open source\n\nWould you like to install it now?</string>
     <string name="set_install">Install</string>
     <string name="set_toast_follow_installer">Follow the installer instructions...</string>
     <string name="set_toast_installer_fail">Failed to start the installer</string>
@@ -183,4 +183,10 @@
     <string name="set_update_download">Download</string>
     <string name="set_uptodate_title">Up to date</string>
     <string name="set_uptodate_message">You are already on the latest version.\n\nCurrent version: %1$s</string>
+    <string name="set_shizuku_label">Shizuku (advanced Quest features)</string>
+    <string name="set_shizuku_btn_install">Install Shizuku</string>
+    <string name="set_shizuku_btn_ready">Shizuku ready ✓</string>
+    <string name="set_toast_shizuku_ready">Shizuku is installed, running and authorized</string>
+    <string name="set_toast_shizuku_downloading">Looking for the latest Shizuku on GitHub...</string>
+    <string name="set_toast_shizuku_download_fail">Could not download Shizuku. Opening the official download page...</string>
 </resources>

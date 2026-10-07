@@ -323,6 +323,10 @@ public class SettingsActivity extends AppCompatActivity {
         if (btnResetUI != null) {
             btnResetUI.setOnClickListener(v -> resetQuestUI());
         }
+        Button btnShizuku = findViewById(R.id.btnShizuku);
+        if (btnShizuku != null) {
+            btnShizuku.setOnClickListener(v -> onShizukuButtonClicked());
+        }
         if (btnRestartUI != null) {
             btnRestartUI.setOnClickListener(v -> restartQuestUI());
         }
@@ -598,6 +602,8 @@ public class SettingsActivity extends AppCompatActivity {
         if (btnUsageAccess != null) {
             updateUsageAccessButton(btnUsageAccess);
         }
+        // Atualiza o texto do botao do Shizuku (pode ter sido instalado/iniciado fora daqui)
+        updateShizukuButton();
 
         // Re-apply theme FIRST in case it changed
         View rootView = findViewById(android.R.id.content);
@@ -1430,6 +1436,7 @@ public class SettingsActivity extends AppCompatActivity {
             public void onStatusChanged(boolean available, boolean hasPermission) {
                 Log.i("SettingsActivity", String.format("Shizuku status - Available: %b, Permission: %b",
                         available, hasPermission));
+                runOnUiThread(() -> updateShizukuButton());
             }
 
             @Override
@@ -1459,9 +1466,38 @@ public class SettingsActivity extends AppCompatActivity {
             case RUNNING:
                 showGrantPermissionDialog();
                 break;
-            case NOT_BUNDLED:
             default:
                 showManualSetupDialog();
+                break;
+        }
+    }
+
+    /** Botao "Instalar Shizuku" das Configuracoes: instala, abre ou pede permissao, conforme o caso. */
+    private void onShizukuButtonClicked() {
+        if (shizukuManager != null && shizukuManager.isReady()) {
+            Toast.makeText(this, R.string.set_toast_shizuku_ready, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        showShizukuSetupDialog();
+        if (shizukuManager != null) {
+            shizukuManager.recheckStatus();
+        }
+    }
+
+    private void updateShizukuButton() {
+        Button btnShizuku = findViewById(R.id.btnShizuku);
+        if (btnShizuku == null) return;
+        ShizukuInstaller installer = new ShizukuInstaller(this);
+        switch (installer.getStatus()) {
+            case NOT_INSTALLED:
+                btnShizuku.setText(R.string.set_shizuku_btn_install);
+                break;
+            case INSTALLED_NOT_RUNNING:
+                btnShizuku.setText(R.string.set_open_shizuku);
+                break;
+            default:
+                btnShizuku.setText(shizukuManager != null && shizukuManager.isReady()
+                        ? R.string.set_shizuku_btn_ready : R.string.set_grant_permission);
                 break;
         }
     }
@@ -1470,14 +1506,7 @@ public class SettingsActivity extends AppCompatActivity {
         ThemedDialog.showThemed(new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle(R.string.set_shizuku_install_title)
                 .setMessage(R.string.set_shizuku_install_message)
-                .setPositiveButton(R.string.set_install, (dialog, which) -> {
-                    boolean started = installer.installShizuku();
-                    if (started) {
-                        Toast.makeText(SettingsActivity.this, SettingsActivity.this.getString(R.string.set_toast_follow_installer), Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(SettingsActivity.this, SettingsActivity.this.getString(R.string.set_toast_installer_fail), Toast.LENGTH_LONG).show();
-                    }
-                })
+                .setPositiveButton(R.string.set_install, (dialog, which) -> installer.installShizuku(SettingsActivity.this))
                 .setNegativeButton(R.string.set_not_now, null)
                 .create());
     }

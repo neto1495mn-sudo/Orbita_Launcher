@@ -38,6 +38,7 @@ public class UpdateManager {
     private static final String KEY_AUTO_UPDATE_CHECK = "auto_update_enabled";
     private static final String KEY_LAST_UPDATE_CHECK = "last_update_check";
     private static final String KEY_UPDATE_FREQUENCY = "update_frequency"; // hours
+    private static final String KEY_SKIPPED_VERSION = "skipped_update_version";
 
     // Repositorio das releases do Orbita no GitHub (publico)
     private static final String GITHUB_API_URL = "https://api.github.com/repos/neto1495mn-sudo/Orbita_Launcher/releases/latest";
@@ -185,6 +186,12 @@ public class UpdateManager {
 
                     if (downloadUrl == null) {
                         showErrorOnMainThread(context.getString(R.string.upd_no_apk_release));
+                        return;
+                    }
+
+                    // Versao que o usuario pediu para pular: a checagem automatica nao avisa de novo
+                    if (latestVersion.equals(prefs.getString(KEY_SKIPPED_VERSION, ""))) {
+                        Log.d(TAG, "Latest version was skipped by the user: " + latestVersion);
                         return;
                     }
 
@@ -424,6 +431,7 @@ public class UpdateManager {
         });
 
         builder.setNeutralButton(R.string.upd_skip_version, (dialog, which) -> {
+            prefs.edit().putString(KEY_SKIPPED_VERSION, newVersion).apply();
             dialog.dismiss();
         });
 
@@ -571,6 +579,14 @@ public class UpdateManager {
      * Download and install update from URL (public wrapper for SettingsActivity)
      */
     public void downloadAndInstall(String downloadUrl) {
+        downloadAndInstall(downloadUrl, null);
+    }
+
+    /**
+     * Baixa um APK (do Orbita ou de outro app, como o Shizuku) e abre o instalador do sistema.
+     * @param fileName nome do arquivo salvo; null usa o nome que vem no link
+     */
+    public void downloadAndInstall(String downloadUrl, String fileName) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                     && !context.getPackageManager().canRequestPackageInstalls()) {
@@ -578,7 +594,9 @@ public class UpdateManager {
                 return;
             }
             // Extract filename from URL
-            String fileName = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
+            if (fileName == null) {
+                fileName = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
+            }
             if (!fileName.endsWith(".apk")) {
                 fileName = "OrbitaLauncher-update.apk";
             }
@@ -599,9 +617,9 @@ public class UpdateManager {
      */
     private void downloadAndInstallUpdate(String downloadUrl, String fileName) {
         try {
-            // Create downloads directory if it doesn't exist
-            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File outputFile = new File(downloadsDir, fileName);
+            // Salva na pasta do proprio app (Android/data/...): o app sempre consegue ler esse
+            // arquivo depois, ao contrario da pasta Download publica nas versoes novas do Android.
+            File outputFile = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
 
             // Delete old file if exists
             if (outputFile.exists()) {
@@ -613,7 +631,7 @@ public class UpdateManager {
             request.setTitle(context.getString(R.string.upd_notification_title));
             request.setDescription(context.getString(R.string.upd_notification_desc, fileName));
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+            request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName);
             request.setMimeType("application/vnd.android.package-archive");
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -634,9 +652,11 @@ public class UpdateManager {
      * Register broadcast receiver for download completion
      */
     private void registerDownloadReceiver(String fileName) {
+        // Usa o contexto do app para o aviso de "download concluido" chegar mesmo se a tela fechar
+        final Context appContext = context.getApplicationContext();
         if (downloadReceiver != null) {
             try {
-                context.unregisterReceiver(downloadReceiver);
+                appContext.unregisterReceiver(downloadReceiver);
             } catch (Exception e) {
                 // Ignore if not registered
             }
@@ -662,7 +682,7 @@ public class UpdateManager {
 
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
                             // Install the APK
-                            installApk(fileName);
+                            installApk(context, fileName);
                         } else {
                             Toast.makeText(context, R.string.upd_download_failed, Toast.LENGTH_SHORT).show();
                         }
@@ -682,19 +702,18 @@ public class UpdateManager {
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         // Android 14+ (API 34) requires RECEIVER_EXPORTED for system broadcasts
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(downloadReceiver, filter, Context.RECEIVER_EXPORTED);
+            appContext.registerReceiver(downloadReceiver, filter, Context.RECEIVER_EXPORTED);
         } else {
-            context.registerReceiver(downloadReceiver, filter);
+            appContext.registerReceiver(downloadReceiver, filter);
         }
     }
 
     /**
      * Install the downloaded APK
      */
-    private void installApk(String fileName) {
+    private void installApk(Context context, String fileName) {
         try {
-            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File apkFile = new File(downloadsDir, fileName);
+            File apkFile = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
 
             if (!apkFile.exists()) {
                 Toast.makeText(context, R.string.upd_apk_not_found, Toast.LENGTH_SHORT).show();
@@ -745,7 +764,7 @@ public class UpdateManager {
     public void cleanup() {
         if (downloadReceiver != null) {
             try {
-                context.unregisterReceiver(downloadReceiver);
+                context.getApplicationContext().unregisterReceiver(downloadReceiver);
             } catch (Exception e) {
                 // Ignore if not registered
             }

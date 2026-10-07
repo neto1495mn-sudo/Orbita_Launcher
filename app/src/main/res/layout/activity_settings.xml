@@ -797,6 +797,28 @@
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="6dp" />
 
+            <!-- Shizuku: instalar / abrir / dar permissao -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/set_shizuku_label"
+                android:textColor="#E0E0E0"
+                android:textSize="11sp"
+                android:layout_marginBottom="4dp" />
+
+            <Button
+                android:id="@+id/btnShizuku"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:layout_marginBottom="6dp"
+                android:backgroundTint="#009688"
+                android:text="@string/set_shizuku_btn_install"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textAllCaps="false"
+                android:minHeight="0dp"
+                android:padding="0dp" />
+
             <!-- Old UI -->
             <TextView
                 android:layout_width="match_parent"
