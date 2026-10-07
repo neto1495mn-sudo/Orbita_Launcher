@@ -122,8 +122,7 @@ public class SettingsActivity extends AppCompatActivity {
         AppCompatButton btnUsageAccess = findViewById(R.id.btnUsageAccess);
         SwitchCompat switchAutoStart = findViewById(R.id.switchAutoStart);
 
-        // Hover-trigger accessibility shortcut
-        Button btnHoverTrigger = findViewById(R.id.btnHoverTrigger);
+        // Status do gatilho por foco (o servico de acessibilidade)
         TextView lblHoverTriggerStatus = findViewById(R.id.lblHoverTriggerStatus);
 
         // ADD BACKUP/RESTORE BUTTONS
@@ -210,6 +209,8 @@ public class SettingsActivity extends AppCompatActivity {
             switchReopen.setOnCheckedChangeListener((b, c) -> {
                 prefs.edit().putBoolean("reopen_on_close", c).apply();
                 Toast.makeText(this, getString(c ? R.string.set_toast_reopen_on : R.string.set_toast_reopen_off), Toast.LENGTH_SHORT).show();
+                // "Reabrir ao fechar" depende do gatilho por foco: liga os dois juntos
+                if (c) enableFocusTrigger();
             });
         }
 
@@ -266,19 +267,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         btnManageCategories.setOnClickListener(v -> showCategoryManager());
 
-        // Hover-trigger accessibility shortcut: tap to open Quest's
-        // accessibility settings so the user can flip the service on/off.
-        // We can't toggle it programmatically (Android security restriction),
-        // but we deep-link straight to the right page.
-        if (btnHoverTrigger != null) {
-            btnHoverTrigger.setOnClickListener(v -> {
-                AccessibilityServiceHelper.openSettings(this);
-                Toast.makeText(this,
-                        getString(R.string.set_toast_hover_find),
-                        Toast.LENGTH_LONG).show();
-            });
-            refreshHoverTriggerStatus(btnHoverTrigger, lblHoverTriggerStatus);
-        }
+        refreshHoverTriggerStatus(lblHoverTriggerStatus);
         btnBack.setOnClickListener(v -> finish());
 
         btnGameStats.setOnClickListener(new View.OnClickListener() {
@@ -317,12 +306,8 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         // ADD QUEST UTILITIES BUTTON LISTENERS
-        Button btnResetUI = findViewById(R.id.btnResetUI);
         Button btnRestartUI = findViewById(R.id.btnRestartUI);
 
-        if (btnResetUI != null) {
-            btnResetUI.setOnClickListener(v -> resetQuestUI());
-        }
         Button btnShizuku = findViewById(R.id.btnShizuku);
         if (btnShizuku != null) {
             btnShizuku.setOnClickListener(v -> onShizukuButtonClicked());
@@ -619,36 +604,60 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Re-check hover-trigger accessibility state - the user may have
         // come back from toggling it in Quest's accessibility settings.
-        Button btnHoverTrigger = findViewById(R.id.btnHoverTrigger);
-        TextView lblHoverTriggerStatus = findViewById(R.id.lblHoverTriggerStatus);
-        if (btnHoverTrigger != null) {
-            refreshHoverTriggerStatus(btnHoverTrigger, lblHoverTriggerStatus);
-        }
+        refreshHoverTriggerStatus(findViewById(R.id.lblHoverTriggerStatus));
     }
 
     /**
-     * Sync the hover-trigger button + status label with the live state
-     * of EvolveAccessibilityService.
+     * Mostra no texto de status se o gatilho por foco (EvolveAccessibilityService) esta ligado.
      */
-    private void refreshHoverTriggerStatus(Button btn, TextView statusLabel) {
-        if (btn == null) return;
-        boolean enabled = AccessibilityServiceHelper.isEnabled(this);
-        if (enabled) {
-            btn.setText(R.string.set_hover_manage);
-            btn.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(0xFF00897B)); // teal
-            if (statusLabel != null) {
-                statusLabel.setText(R.string.set_hover_status_on);
-                statusLabel.setTextColor(0xFF66BB6A); // light green
-            }
+    private void refreshHoverTriggerStatus(TextView statusLabel) {
+        if (statusLabel == null) return;
+        if (AccessibilityServiceHelper.isEnabled(this)) {
+            statusLabel.setText(R.string.set_hover_status_on);
+            statusLabel.setTextColor(0xFF66BB6A); // light green
         } else {
-            btn.setText(R.string.set_enable_trigger);
-            btn.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(0xFF555555)); // gray
-            if (statusLabel != null) {
-                statusLabel.setText(R.string.set_focus_trigger_hint);
-                statusLabel.setTextColor(0xFF888888); // gray
-            }
+            statusLabel.setText(R.string.set_hover_status_off);
+            statusLabel.setTextColor(0xFF888888); // gray
+        }
+    }
+
+    // Marca que o proximo resultado do Shizuku e o do comando que liga o gatilho
+    private boolean pendingFocusTriggerEnable = false;
+
+    /**
+     * Liga o gatilho por foco. Com o Shizuku pronto, liga sozinho (mesma permissao do ADB);
+     * sem ele, o Android nao deixa o app ligar a acessibilidade, entao abrimos a tela certa
+     * e explicamos o que tocar.
+     */
+    private void enableFocusTrigger() {
+        if (AccessibilityServiceHelper.isEnabled(this)) return;
+
+        if (shizukuManager != null && shizukuManager.isReady()) {
+            String comp = new android.content.ComponentName(this, EvolveAccessibilityService.class).flattenToString();
+            String cmd = "cur=$(settings get secure enabled_accessibility_services); "
+                    + "case \"$cur\" in "
+                    + "*" + comp + "*) ;; "
+                    + "''|null) settings put secure enabled_accessibility_services " + comp + " ;; "
+                    + "*) settings put secure enabled_accessibility_services \"$cur:" + comp + "\" ;; "
+                    + "esac; settings put secure accessibility_enabled 1";
+            pendingFocusTriggerEnable = true;
+            shizukuManager.executeShellCommand(cmd);
+            return;
+        }
+
+        AccessibilityServiceHelper.openSettings(this);
+        Toast.makeText(this, getString(R.string.set_toast_hover_find), Toast.LENGTH_LONG).show();
+    }
+
+    private void onFocusTriggerCommandResult() {
+        pendingFocusTriggerEnable = false;
+        refreshHoverTriggerStatus(findViewById(R.id.lblHoverTriggerStatus));
+        if (AccessibilityServiceHelper.isEnabled(this)) {
+            Toast.makeText(this, getString(R.string.set_toast_trigger_enabled), Toast.LENGTH_SHORT).show();
+        } else {
+            // O comando nao funcionou: cai no caminho manual
+            AccessibilityServiceHelper.openSettings(this);
+            Toast.makeText(this, getString(R.string.set_toast_hover_find), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -1344,6 +1353,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void setupVersionAndUpdates() {
         AppCompatButton btnCheckUpdates = findViewById(R.id.btnCheckUpdates);
+        TextView txtUpdateStatus = findViewById(R.id.txtUpdateStatus);
         SwitchCompat switchAutoUpdate = findViewById(R.id.switchAutoUpdate);
 
         if (switchAutoUpdate != null) {
@@ -1357,13 +1367,15 @@ public class SettingsActivity extends AppCompatActivity {
 
         if (btnCheckUpdates != null) {
             btnCheckUpdates.setOnClickListener(v -> {
-                Toast.makeText(this, R.string.set_toast_checking_updates, Toast.LENGTH_SHORT).show();
+                showUpdateStatus(txtUpdateStatus, getString(R.string.set_toast_checking_updates), 0xFF888888);
                 final UpdateManager updateManager = new UpdateManager(this);
 
                 updateManager.checkForUpdates(new UpdateManager.UpdateCallback() {
                     @Override
                     public void onUpdateAvailable(String version, String downloadUrl, String releaseNotes) {
                         if (isFinishing() || isDestroyed()) return;
+                        showUpdateStatus(txtUpdateStatus,
+                                getString(R.string.set_update_available_version, version), 0xFF6B8EFF);
                         android.widget.LinearLayout container = new android.widget.LinearLayout(SettingsActivity.this);
                         container.setOrientation(android.widget.LinearLayout.VERTICAL);
                         int padding = (int) (16 * getResources().getDisplayMetrics().density);
@@ -1406,20 +1418,30 @@ public class SettingsActivity extends AppCompatActivity {
                     @Override
                     public void onNoUpdateAvailable(String currentVersion) {
                         if (isFinishing() || isDestroyed()) return;
-                        ThemedDialog.showThemed(new AlertDialog.Builder(SettingsActivity.this)
-                                .setTitle(R.string.set_uptodate_title)
-                                .setMessage(SettingsActivity.this.getString(R.string.set_uptodate_message, currentVersion))
-                                .setPositiveButton(R.string.set_ok, null)
-                                .create());
+                        // Mesma versao (ou mais nova) que a do GitHub: so avisa no card, sem baixar nada
+                        showUpdateStatus(txtUpdateStatus,
+                                getString(R.string.set_uptodate_message, currentVersion), 0xFF66BB6A);
                     }
 
                     @Override
                     public void onError(String error) {
-                        Toast.makeText(SettingsActivity.this, error, Toast.LENGTH_LONG).show();
+                        if (isFinishing() || isDestroyed()) return;
+                        showUpdateStatus(txtUpdateStatus, error, 0xFFEF5350);
                     }
                 });
             });
         }
+    }
+
+    /** Mostra o resultado da checagem de atualizacao no proprio card de Atualizacoes. */
+    private void showUpdateStatus(TextView statusView, String message, int color) {
+        if (statusView == null) {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        statusView.setText(message);
+        statusView.setTextColor(color);
+        statusView.setVisibility(View.VISIBLE);
     }
 
     private void launchNativeSettings() {
@@ -1442,7 +1464,9 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onCommandResult(boolean success, String output) {
                 runOnUiThread(() -> {
-                    if (success) {
+                    if (pendingFocusTriggerEnable) {
+                        onFocusTriggerCommandResult();
+                    } else if (success) {
                         Toast.makeText(SettingsActivity.this, "" + output, Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(SettingsActivity.this, "" + output, Toast.LENGTH_LONG).show();
@@ -1557,26 +1581,6 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     // ===== QUEST UTILITIES =====
-
-    private void resetQuestUI() {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            showShizukuSetupDialog();
-            if (shizukuManager != null) {
-                shizukuManager.recheckStatus();
-            }
-            return;
-        }
-
-        ThemedDialog.showThemed(new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.set_clear_vrshell_title)
-                .setMessage(R.string.set_clear_vrshell_message)
-                .setPositiveButton(R.string.set_clear_data, (dialog, which) -> {
-                    Toast.makeText(this, getString(R.string.set_toast_clearing_vrshell), Toast.LENGTH_SHORT).show();
-                    shizukuManager.clearPackageData("com.oculus.vrshell");
-                })
-                .setNegativeButton(R.string.set_cancel, null)
-                .create());
-    }
 
     private void restartQuestUI() {
         if (shizukuManager == null || !shizukuManager.isReady()) {

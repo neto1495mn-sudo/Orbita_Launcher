@@ -40,6 +40,7 @@
     <string name="main_bulk_remove_category">📤  Remover da categoria</string>
     <string name="main_bulk_rename">✏️  Renomear</string>
     <string name="main_bulk_stats">📊  Estatísticas</string>
+    <string name="main_bulk_app_settings">⚙️  Configurações do app</string>
     <string name="main_bulk_uninstall">🗑️  Desinstalar</string>
     <string name="main_bulk_clear">✕  Limpar</string>
     <string name="main_toast_switch_to_category">Mude para uma categoria para remover apps dela</string>
@@ -138,6 +139,7 @@
     <string name="main_opt_select">☐ Selecionar</string>
     <string name="main_opt_remove_from">Remover de %1$s</string>
     <string name="main_opt_add_to_category">Adicionar à categoria</string>
+    <string name="main_opt_app_settings">Configurações do app</string>
     <string name="main_opt_app_info">Informações do app</string>
     <string name="main_opt_uninstall">Desinstalar</string>
     <string name="main_opt_move_selected">Mover %1$d selecionado(s) para a categoria</string>
