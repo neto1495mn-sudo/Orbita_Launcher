@@ -38,7 +38,7 @@
     <string name="mgr_follow_installer">Siga as instruções do instalador...</string>
     <string name="mgr_installer_failed">Falha ao iniciar o instalador</string>
     <string name="mgr_install_dialog_title">Instalar o Shizuku</string>
-    <string name="mgr_install_dialog_message">O Shizuku é necessário para limpar os dados e o cache dos apps.\n\n- Baixado da página oficial do Shizuku no GitHub\n- Gratuito e de código aberto\n\nDeseja instalá-lo agora?</string>
+    <string name="mgr_install_dialog_message">O Shizuku é necessário para limpar os dados e o cache dos apps.\n\n- Uma versão do Shizuku adaptada para o Meta Quest já vem incluída no Orbita (sem download)\n- Gratuito e de código aberto\n\nDeseja instalá-lo agora?</string>
     <string name="mgr_not_running_title">Shizuku não está em execução</string>
     <string name="mgr_not_running_message">O Shizuku está instalado, mas o servidor não está em execução.\n\nAbra o Shizuku e inicie o servidor.</string>
     <string name="mgr_permission_title">Permissão necessária</string>
