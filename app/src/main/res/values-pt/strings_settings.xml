@@ -150,7 +150,7 @@
     <string name="set_toast_all_categories_deleted">Todas as categorias foram excluídas</string>
     <string name="set_toast_no_update">Sem atualização disponível por enquanto</string>
     <string name="set_shizuku_install_title">Instalar o Shizuku</string>
-    <string name="set_shizuku_install_message">O Shizuku é necessário para recursos avançados do Quest, como redefinir a interface.\n\nO Orbita vai baixar a versão mais nova da página oficial do Shizuku no GitHub e abrir o instalador.\nGratuito e de código aberto\n\nDeseja instalar agora?</string>
+    <string name="set_shizuku_install_message">O Shizuku é necessário para recursos avançados do Quest, como redefinir a interface.\n\nUma versão do Shizuku adaptada para o Meta Quest já vem incluída no Orbita\nInstalação com um toque - sem downloads\nGratuito e de código aberto\n\nDeseja instalar agora?</string>
     <string name="set_install">Instalar</string>
     <string name="set_toast_follow_installer">Siga as instruções do instalador...</string>
     <string name="set_toast_installer_fail">Falha ao iniciar o instalador</string>
@@ -187,6 +187,4 @@
     <string name="set_shizuku_btn_install">Instalar Shizuku</string>
     <string name="set_shizuku_btn_ready">Shizuku pronto ✓</string>
     <string name="set_toast_shizuku_ready">O Shizuku está instalado, rodando e autorizado</string>
-    <string name="set_toast_shizuku_downloading">Procurando a versão mais nova do Shizuku no GitHub...</string>
-    <string name="set_toast_shizuku_download_fail">Não foi possível baixar o Shizuku. Abrindo a página oficial de download...</string>
 </resources>
