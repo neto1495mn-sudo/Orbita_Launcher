@@ -19,6 +19,8 @@ captures/
 # Compiled files
 *.class
 *.apk
+# Shizuku modificado para o Quest, embutido no Orbita
+!app/src/main/assets/shizuku.apk
 *.aar
 *.dex
 *.jar
