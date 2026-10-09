@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.TextView bulkActionCountLabel;
     private android.widget.Button bulkActionRenameBtn;
     private android.widget.Button bulkActionPlaytimeBtn;
+    private android.widget.Button bulkActionAppSettingsBtn;
     private android.widget.Button bulkActionRemoveCategoryBtn;
     // Queue of packages to uninstall sequentially (Android shows the
     // uninstall confirmation one at a time, so we launch them one by one).
@@ -710,6 +711,12 @@ public class MainActivity extends AppCompatActivity {
             bulkActionPlaytimeBtn.setOnClickListener(v -> showPlaytimeForSingleSelected());
             bulkActionBar.addView(bulkActionPlaytimeBtn, makeBulkBarButtonParams(d));
 
+            // App settings button (only shows when exactly 1 app selected):
+            // opens the native Android settings screen for that app
+            bulkActionAppSettingsBtn = makeBulkBarButton(getString(R.string.main_bulk_app_settings), theme);
+            bulkActionAppSettingsBtn.setOnClickListener(v -> openAppSettingsForSingleSelected());
+            bulkActionBar.addView(bulkActionAppSettingsBtn, makeBulkBarButtonParams(d));
+
             // Uninstall button
             android.widget.Button uninstallBtn = makeBulkBarButton(getString(R.string.main_bulk_uninstall), theme);
             uninstallBtn.setOnClickListener(v -> confirmAndUninstallSelected());
@@ -782,6 +789,9 @@ public class MainActivity extends AppCompatActivity {
         if (bulkActionPlaytimeBtn != null) {
             bulkActionPlaytimeBtn.setVisibility(singleSelected ? View.VISIBLE : View.GONE);
         }
+        if (bulkActionAppSettingsBtn != null) {
+            bulkActionAppSettingsBtn.setVisibility(singleSelected ? View.VISIBLE : View.GONE);
+        }
         // Remove-from-category: only when viewing a specific category
         if (bulkActionRemoveCategoryBtn != null) {
             boolean inCategoryView = currentCategory != null &&
@@ -834,6 +844,38 @@ public class MainActivity extends AppCompatActivity {
     private void showPlaytimeForSingleSelected() {
         AppInfo app = getSingleSelectedApp();
         if (app != null) showPlaytimeDetails(app);
+    }
+
+    private void openAppSettingsForSingleSelected() {
+        AppInfo app = getSingleSelectedApp();
+        if (app == null) return;
+        clearSelection();
+        openAppSettings(app.packageName);
+    }
+
+    /**
+     * Abre a tela de configuracoes nativas do Android para um app (permissoes, armazenamento,
+     * forcar parada...). No Quest, a Meta pode interceptar o pedido generico, entao tentamos
+     * primeiro direto no app de Configuracoes do Android.
+     */
+    private void openAppSettings(String packageName) {
+        android.net.Uri uri = android.net.Uri.parse("package:" + packageName);
+        try {
+            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri);
+            intent.setPackage("com.android.settings");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return;
+        } catch (Exception e) {
+            android.util.Log.w("MainActivity", "Native app settings launch failed, trying generic intent", e);
+        }
+        try {
+            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, getString(R.string.main_toast_cannot_open_app_settings), Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -4089,8 +4131,8 @@ public class MainActivity extends AppCompatActivity {
         actionIds.add("hide");
         optionsList.add(getString(R.string.main_opt_unhide_all));
         actionIds.add("unhide_all");
-        optionsList.add(getString(R.string.main_opt_app_info));
-        actionIds.add("app_info");
+        optionsList.add(getString(R.string.main_opt_app_settings));
+        actionIds.add("app_settings");
 
         String[] options = optionsList.toArray(new String[0]);
 
@@ -4117,8 +4159,8 @@ public class MainActivity extends AppCompatActivity {
                 hideApp(app);
             } else if (selectedAction.equals("unhide_all")) {
                 unhideAllApps();
-            } else if (selectedAction.equals("app_info")) {
-                showAppInfo(app);
+            } else if (selectedAction.equals("app_settings")) {
+                openAppSettings(app.packageName);
             }
         });
         ThemedDialog.showThemed(builder.create());
@@ -4282,16 +4324,6 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(getString(R.string.main_btn_cancel), null)
                 .show();
-    }
-
-    private void showAppInfo(AppInfo app) {
-        try {
-            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            intent.setData(android.net.Uri.parse("package:" + app.packageName));
-            startActivity(intent);
-        } catch (Exception e) {
-            // Ignore app info errors
-        }
     }
 
     private void uninstallApp(AppInfo app) {

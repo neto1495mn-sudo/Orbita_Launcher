@@ -177,10 +177,10 @@
         <!-- Accessibility service for hover-triggered launcher open.
              Monitors hover/focus events on Quest's system UI packages
              (vrshell, panel apps) so that hovering over the camera app
-             icon or library button opens Evolve Launcher.
+             icon or library button opens Orbita Launcher.
 
              User must enable this manually in Quest:
-                Settings -> Accessibility -> Evolve Launcher hover trigger -->
+                Settings -> Accessibility -> Orbita Launcher hover trigger -->
         <service
             android:name=".EvolveAccessibilityService"
             android:exported="false"

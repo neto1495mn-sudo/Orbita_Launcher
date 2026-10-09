@@ -34,14 +34,18 @@ Organize your apps, track your playtime and set up the launcher your way.
 - **Startup:** start with system, reopen on close, hide Meta Store
 - **System:** native Quest settings, device information and IP address
 - **Backup and restore:** export and import categories and settings
-- **Quest utilities:** classic Quest interface, VR Shell and storage manager (use Shizuku)
+- **Updates:** check now or automatically; you are only offered a download when a newer version exists
+- **Quest utilities:** VR Shell and storage manager (use Shizuku)
 - **Applications:** bundled apps and app manager
+
+### App settings shortcut
+Long-press an app and tap **App settings** to open its native Android settings screen (permissions, storage, force stop).
 
 ### Languages
 The app follows the language of the Quest. It is available in English and Portuguese (Brazil). Any other system language falls back to English.
 
 ### Reopen on close
-When enabled, the launcher opens again when you tap X. During a game it stays quiet and comes back when you leave the game. It requires the accessibility trigger to be enabled in the Quest accessibility settings.
+When enabled, the launcher opens again when you tap X. During a game it stays quiet and comes back when you leave the game. Turning it on also turns on the focus trigger: with Shizuku running this happens on its own, otherwise the Quest accessibility settings open so you can switch on 'Orbita Launcher hover trigger'.
 
 ---
 

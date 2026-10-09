@@ -169,6 +169,16 @@ public class UpdateManager {
 
                     Log.d(TAG, "Current version: " + currentVersion + ", Latest version: " + latestVersion);
 
+                    // Checagem automatica: so avisa o usuario se a versao do GitHub for MAIOR que a instalada
+                    if (!isNewerVersion(latestVersion, currentVersion)) {
+                        if (showToastIfNoUpdate) {
+                            ((Activity) context).runOnUiThread(() ->
+                                    Toast.makeText(context, R.string.upd_already_latest, Toast.LENGTH_SHORT).show());
+                        }
+                        Log.d(TAG, "No update available");
+                        return;
+                    }
+
                     // Find the APK asset in the release
                     JSONArray assets = release.getJSONArray("assets");
                     String downloadUrl = null;
@@ -195,28 +205,17 @@ public class UpdateManager {
                         return;
                     }
 
-                    // Compare versions
-                    if (compareVersions(latestVersion, currentVersion) > 0) {
-                        // New version available
-                        String releaseNotes = release.optString("body", context.getString(R.string.upd_no_notes));
-                        String finalDownloadUrl = downloadUrl;
-                        String finalFileName = fileName;
-                        String finalLatestVersion = latestVersion;
+                    // New version available
+                    String releaseNotes = release.optString("body", context.getString(R.string.upd_no_notes));
+                    String finalDownloadUrl = downloadUrl;
+                    String finalFileName = fileName;
+                    String finalLatestVersion = latestVersion;
 
-                        ((Activity) context).runOnUiThread(() -> {
-                            Activity act = (Activity) context;
-                            if (act.isFinishing() || act.isDestroyed()) return;
-                            showUpdateDialog(finalLatestVersion, currentVersion, releaseNotes, finalDownloadUrl, finalFileName);
-                        });
-                    } else {
-                        // No update available
-                        if (showToastIfNoUpdate) {
-                            ((Activity) context).runOnUiThread(() -> {
-                                Toast.makeText(context, R.string.upd_already_latest, Toast.LENGTH_SHORT).show();
-                            });
-                        }
-                        Log.d(TAG, "No update available");
-                    }
+                    ((Activity) context).runOnUiThread(() -> {
+                        Activity act = (Activity) context;
+                        if (act.isFinishing() || act.isDestroyed()) return;
+                        showUpdateDialog(finalLatestVersion, currentVersion, releaseNotes, finalDownloadUrl, finalFileName);
+                    });
                 } else {
                     showErrorOnMainThread(context.getString(R.string.upd_check_failed_http, responseCode));
                 }
@@ -274,6 +273,12 @@ public class UpdateManager {
 
                     Log.d(TAG, "Current: " + currentVersion + ", Latest: " + latestVersion);
 
+                    // Versao igual (ou mais antiga): avisa que ja esta atualizado e nao oferece download
+                    if (!isNewerVersion(latestVersion, currentVersion)) {
+                        ((Activity) context).runOnUiThread(() -> callback.onNoUpdateAvailable(currentVersion));
+                        return;
+                    }
+
                     // Find the APK asset
                     JSONArray assets = release.getJSONArray("assets");
                     String downloadUrl = null;
@@ -297,18 +302,10 @@ public class UpdateManager {
                     final String finalLatestVersion = latestVersion;
                     final String finalReleaseNotes = releaseNotes;
 
-                    // Compare versions
-                    if (compareVersions(latestVersion, currentVersion) > 0) {
-                        // New version available
-                        ((Activity) context).runOnUiThread(() -> {
-                            callback.onUpdateAvailable(finalLatestVersion, finalDownloadUrl, finalReleaseNotes);
-                        });
-                    } else {
-                        // No update available
-                        ((Activity) context).runOnUiThread(() -> {
-                            callback.onNoUpdateAvailable(currentVersion);
-                        });
-                    }
+                    // So chega aqui se a versao do GitHub for maior: libera o download
+                    ((Activity) context).runOnUiThread(() -> {
+                        callback.onUpdateAvailable(finalLatestVersion, finalDownloadUrl, finalReleaseNotes);
+                    });
                 } else {
                     final String errorMsg = context.getString(R.string.upd_check_failed_http, responseCode);
                     ((Activity) context).runOnUiThread(() -> callback.onError(errorMsg));
@@ -322,6 +319,16 @@ public class UpdateManager {
                 ((Activity) context).runOnUiThread(() -> callback.onError(errorMsg));
             }
         });
+    }
+
+    /**
+     * true somente se "latest" for uma versao valida e MAIOR que "current".
+     * Versao igual, mais antiga ou ilegivel nunca conta como atualizacao.
+     */
+    private boolean isNewerVersion(String latest, String current) {
+        if (latest == null || !latest.matches(".*\\d.*")) return false;
+        if (current == null || !current.matches(".*\\d.*")) return false;
+        return compareVersions(latest, current) > 0;
     }
 
     /**
