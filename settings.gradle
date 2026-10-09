@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Evolve Launcher"
+rootProject.name = "Orbita Launcher"
 include ':app'

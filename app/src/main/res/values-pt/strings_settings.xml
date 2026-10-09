@@ -9,7 +9,6 @@
     <string name="set_manage_categories">Gerenciar categorias</string>
     <string name="set_focus_trigger">Gatilho por foco</string>
     <string name="set_focus_trigger_hint">Aponte para Help &amp; Tips na biblioteca da Meta para abrir o Orbita</string>
-    <string name="set_enable_trigger">Ativar gatilho</string>
     <string name="set_section_appearance">APARÊNCIA</string>
     <string name="set_sizes_opacity">Tamanhos e opacidade</string>
     <string name="set_icon_size">Tamanho dos ícones</string>
@@ -21,7 +20,7 @@
     <string name="set_status_off">Status: Desativado</string>
     <string name="set_status_on">Status: Ativado</string>
     <string name="set_reopen_on_close">Reabrir ao fechar</string>
-    <string name="set_reopen_desc">Ao tocar no X o launcher abre de novo. Durante um jogo ele fica quieto e volta quando você sai do jogo. Requer o gatilho de acessibilidade ativado.</string>
+    <string name="set_reopen_desc">Ao tocar no X o launcher abre de novo. Durante um jogo ele fica quieto e volta quando você sai do jogo. Ao ligar esta opção, o gatilho por foco também é ativado.</string>
     <string name="set_hide_meta_store">Ocultar Meta Store</string>
     <string name="set_hide_meta_store_desc">Fecha a Meta Store automaticamente, a menos que você a abra manualmente</string>
     <string name="set_section_system">SISTEMA</string>
@@ -51,8 +50,6 @@
     <string name="set_view_stats">Ver estatísticas</string>
     <string name="set_section_quest_utils">UTILITÁRIOS DO QUEST</string>
     <string name="set_shell_via_shizuku">Comandos de shell via Shizuku</string>
-    <string name="set_classic_ui">Interface clássica do Quest</string>
-    <string name="set_back_to_old_ui">Voltar à interface antiga</string>
     <string name="set_vr_shell">VR Shell</string>
     <string name="set_stop_vrshell">Parar VrShell</string>
     <string name="set_section_apps">APLICATIVOS</string>
@@ -72,6 +69,7 @@
     <string name="set_toast_autostart_off">Início automático desativado</string>
     <string name="set_toast_store_on">A Meta Store será ocultada automaticamente</string>
     <string name="set_toast_store_off">Ocultar a Meta Store desativado</string>
+    <string name="set_toast_trigger_enabled">Gatilho por foco ativado</string>
     <string name="set_toast_hover_find">Encontre \'Orbita Launcher hover trigger\' na lista e ative</string>
     <string name="set_refreshing">Atualizando...</string>
     <string name="set_toast_icons_cleared">Cache de ícones limpo - reabra o launcher para recarregar</string>
@@ -80,7 +78,7 @@
     <string name="set_open_settings">Abrir configurações</string>
     <string name="set_toast_window_stays_open">A janela fica aberta - toque em Fechar quando terminar</string>
     <string name="set_toast_android_settings_fail">Não foi possível abrir as configurações do Android neste aparelho</string>
-    <string name="set_hover_manage">Gerenciar em Acessibilidade</string>
+    <string name="set_hover_status_off">Desativado — é ativado junto com \"Reabrir ao fechar\"</string>
     <string name="set_hover_status_on">Ativado — aponte para Help &amp; Tips para abrir o Orbita</string>
     <string name="set_usage_granted">Acesso ao uso: concedido</string>
     <string name="set_usage_grant_btn">Conceder permissão de acesso ao uso</string>
@@ -164,10 +162,6 @@
     <string name="set_grant">Conceder</string>
     <string name="set_shizuku_not_initialized">Shizuku não inicializado</string>
     <string name="set_shizuku_setup_title">Configuração do Shizuku necessária</string>
-    <string name="set_clear_vrshell_title">Limpar dados do VrShell?</string>
-    <string name="set_clear_vrshell_message">Isso volta o Quest para a interface antiga.\n\nTodas as configurações do VrShell serão redefinidas.</string>
-    <string name="set_clear_data">Limpar dados</string>
-    <string name="set_toast_clearing_vrshell">Limpando dados do VrShell...</string>
     <string name="set_stop_vrshell_title">Parar o VrShell?</string>
     <string name="set_stop_vrshell_message">Isso vai parar o VrShell.\n\nPressione o botão do Quest para reiniciá-lo.</string>
     <string name="set_stop">Parar</string>
@@ -181,8 +175,7 @@
     <string name="set_update_available_title">Atualização disponível</string>
     <string name="set_update_available_version">A versão %1$s está disponível.</string>
     <string name="set_update_download">Baixar</string>
-    <string name="set_uptodate_title">Tudo em dia</string>
-    <string name="set_uptodate_message">Você já está na versão mais recente.\n\nVersão atual: %1$s</string>
+    <string name="set_uptodate_message">Você já está na versão mais recente (%1$s).</string>
     <string name="set_shizuku_label">Shizuku (recursos avançados do Quest)</string>
     <string name="set_shizuku_btn_install">Instalar Shizuku</string>
     <string name="set_shizuku_btn_ready">Shizuku pronto ✓</string>
