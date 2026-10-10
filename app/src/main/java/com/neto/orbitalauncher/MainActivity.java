@@ -2023,6 +2023,15 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, getString(R.string.main_toast_icon_size, iconSizeDp, columns), Toast.LENGTH_SHORT).show();
     }
 
+    /** Mistura a cor do tema com um cinza bem escuro: amount 1 = cor do tema, 0 = cinza escuro. */
+    private static int blendToDarkGray(int color, float amount) {
+        final int dark = 0x1C; // #1C1D20
+        int r = Math.round(dark + (Color.red(color) - dark) * amount);
+        int g = Math.round(dark + 1 + (Color.green(color) - dark - 1) * amount);
+        int b = Math.round(dark + 4 + (Color.blue(color) - dark - 4) * amount);
+        return Color.rgb(r, g, b);
+    }
+
     public void updateBackground() {
         runOnUiThread(() -> {
             try {
@@ -2030,7 +2039,9 @@ public class MainActivity extends AppCompatActivity {
                 if (mainLayout == null) return;
 
                 int opacity = prefs.getInt("background_opacity", 100);
-                int alpha = (int) ((opacity / 100f) * 255);
+                // No Quest a parte transparente da janela aparece preta. Entao a barrinha nao mexe
+                // na transparencia: ela escurece o painel ate um cinza bem escuro, nunca preto.
+                float mix = Math.max(0f, Math.min(1f, opacity / 100f));
 
                 // A janela fica transparente; a opacidade vale para o painel cinza e a barra lateral
                 mainLayout.setAlpha(1.0f);
@@ -2041,13 +2052,11 @@ public class MainActivity extends AppCompatActivity {
 
                 MaterialCardView panel = findViewById(R.id.panelCard);
                 if (panel != null) {
-                    panel.setCardBackgroundColor(Color.argb(alpha,
-                            Color.red(t.bgSecondary), Color.green(t.bgSecondary), Color.blue(t.bgSecondary)));
+                    panel.setCardBackgroundColor(blendToDarkGray(t.bgSecondary, mix));
                 }
                 View side = findViewById(R.id.sideNav);
                 if (side != null) {
-                    side.setBackgroundColor(Color.argb(alpha,
-                            Color.red(t.bgPrimary), Color.green(t.bgPrimary), Color.blue(t.bgPrimary)));
+                    side.setBackgroundColor(blendToDarkGray(t.bgPrimary, mix));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
