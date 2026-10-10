@@ -620,6 +620,86 @@
                         android:paddingStart="16dp"
                         android:paddingTop="10dp"
                         android:paddingEnd="16dp"
+                        android:paddingBottom="12dp"
+                        android:tag="theme_ignore">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:tag="theme_ignore"
+                            android:text="@string/set_image_source"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/txtImageSourceDesc"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/set_image_source_evolve_desc"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal"
+                            android:tag="theme_ignore">
+
+                            <Button
+                                android:id="@+id/btnImageSourceEvolve"
+                                android:layout_width="0dp"
+                                android:layout_height="36dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/orbita_bg_pill"
+                                android:fontFamily="sans-serif-medium"
+                                android:minHeight="0dp"
+                                android:paddingStart="12dp"
+                                android:paddingEnd="12dp"
+                                android:stateListAnimator="@null"
+                                android:tag="theme_ignore"
+                                android:text="@string/set_image_source_evolve"
+                                android:textAllCaps="false"
+                                android:textColor="@color/orbita_text"
+                                android:textSize="13sp" />
+
+                            <Space
+                                android:layout_width="8dp"
+                                android:layout_height="1dp" />
+
+                            <Button
+                                android:id="@+id/btnImageSourceMeta"
+                                android:layout_width="0dp"
+                                android:layout_height="36dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/orbita_bg_pill"
+                                android:fontFamily="sans-serif-medium"
+                                android:minHeight="0dp"
+                                android:paddingStart="12dp"
+                                android:paddingEnd="12dp"
+                                android:stateListAnimator="@null"
+                                android:tag="theme_ignore"
+                                android:text="@string/set_image_source_meta"
+                                android:textAllCaps="false"
+                                android:textColor="@color/orbita_text"
+                                android:textSize="13sp" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/orbita_bg_card"
+                        android:minHeight="52dp"
+                        android:orientation="vertical"
+                        android:paddingStart="16dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="16dp"
                         android:paddingBottom="10dp"
                         android:tag="theme_ignore">
 

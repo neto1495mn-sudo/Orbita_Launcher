@@ -178,4 +178,9 @@
     <string name="set_native_settings_desc">Opens the Quest\'s Android settings</string>
     <string name="set_vr_shell_desc">Restarts the Quest interface (needs Shizuku)</string>
     <string name="set_backup_restore_title">Backup and restore</string>
+    <string name="set_image_source">Picture source</string>
+    <string name="set_image_source_evolve">Evolve collection</string>
+    <string name="set_image_source_meta">Meta store</string>
+    <string name="set_image_source_evolve_desc">Pictures from the Evolve launcher collection (default).</string>
+    <string name="set_image_source_meta_desc">Pictures from the Meta store. The app shows its own picture until the store one is downloaded, and checks for new pictures every time the Quest connects to the internet.</string>
 </resources>

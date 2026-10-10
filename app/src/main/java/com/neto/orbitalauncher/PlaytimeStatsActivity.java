@@ -52,8 +52,6 @@ public class PlaytimeStatsActivity extends AppCompatActivity {
     private static final String VIEW_HIGHLIGHT = "highlight";
 
     // GitHub cover images URL
-    private static final String GITHUB_ICON_BASE_URL =
-            "https://raw.githubusercontent.com/JarJarBlinkz/LauncherIcons/main/oculus_landscape/";
 
     private static final int GRID_COLUMNS = 3;
 
@@ -466,10 +464,6 @@ public class PlaytimeStatsActivity extends AppCompatActivity {
     // Miniaturas
     // ------------------------------------------------------------------
 
-    private String getGitHubIconUrl(String packageName) {
-        return GITHUB_ICON_BASE_URL + packageName + ".jpg";
-    }
-
     private void loadThumb(ImageView target, String packageName, int width, int height) {
         Drawable appIcon;
         try {
@@ -477,8 +471,19 @@ public class PlaytimeStatsActivity extends AppCompatActivity {
         } catch (PackageManager.NameNotFoundException e) {
             appIcon = getDrawable(android.R.drawable.sym_def_app_icon);
         }
+        Object model = StoreImageManager.imageModel(this, packageName);
+        if (model == null) {
+            Glide.with(this).clear(target);
+            target.setImageDrawable(appIcon);
+            return;
+        }
+        RequestOptions storeOptions = new RequestOptions();
+        if (model instanceof java.io.File) {
+            storeOptions = storeOptions.signature(new com.bumptech.glide.signature.ObjectKey(((java.io.File) model).lastModified()));
+        }
         Glide.with(this)
-                .load(getGitHubIconUrl(packageName))
+                .load(model)
+                .apply(storeOptions)
                 .apply(new RequestOptions()
                         .placeholder(appIcon)
                         .error(appIcon)

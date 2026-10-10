@@ -274,6 +274,8 @@ public class SettingsActivity extends AppCompatActivity {
         btnBackup.setOnClickListener(v -> backupLayout());
         btnRestore.setOnClickListener(v -> restoreLayout());
 
+        setupImageSource();
+
         // Refresh Icons - clears Glide cache and reloads all cover art
         Button btnRefreshIcons = findViewById(R.id.btnRefreshIcons);
         if (btnRefreshIcons != null) {
@@ -283,6 +285,7 @@ public class SettingsActivity extends AppCompatActivity {
                 com.bumptech.glide.Glide.get(this).clearMemory();
                 new Thread(() -> {
                     com.bumptech.glide.Glide.get(this).clearDiskCache();
+                    StoreImageManager.clearSaved(this);
                     runOnUiThread(() -> {
                         btnRefreshIcons.setEnabled(true);
                         btnRefreshIcons.setText(R.string.set_refresh_icons);
@@ -1659,6 +1662,35 @@ public class SettingsActivity extends AppCompatActivity {
         } else {
             txt.setText(R.string.set_no_internet);
             txt.setTextColor(android.graphics.Color.parseColor("#808080"));
+        }
+    }
+
+    /** Origem das imagens: colecao do Evolve ou loja da Meta. */
+    private void setupImageSource() {
+        Button btnEvolve = findViewById(R.id.btnImageSourceEvolve);
+        Button btnMeta = findViewById(R.id.btnImageSourceMeta);
+        if (btnEvolve == null || btnMeta == null) return;
+        btnEvolve.setOnClickListener(v -> chooseImageSource(StoreImageManager.SOURCE_EVOLVE));
+        btnMeta.setOnClickListener(v -> chooseImageSource(StoreImageManager.SOURCE_META));
+        updateImageSourceButtons();
+    }
+
+    private void chooseImageSource(String source) {
+        if (source.equals(StoreImageManager.getSource(this))) return;
+        StoreImageManager.setSource(this, source);
+        com.bumptech.glide.Glide.get(this).clearMemory();
+        updateImageSourceButtons();
+    }
+
+    private void updateImageSourceButtons() {
+        boolean meta = StoreImageManager.isMeta(this);
+        Button btnEvolve = findViewById(R.id.btnImageSourceEvolve);
+        Button btnMeta = findViewById(R.id.btnImageSourceMeta);
+        TextView desc = findViewById(R.id.txtImageSourceDesc);
+        btnEvolve.setBackgroundResource(meta ? R.drawable.orbita_bg_pill : R.drawable.orbita_bg_pill_accent);
+        btnMeta.setBackgroundResource(meta ? R.drawable.orbita_bg_pill_accent : R.drawable.orbita_bg_pill);
+        if (desc != null) {
+            desc.setText(meta ? R.string.set_image_source_meta_desc : R.string.set_image_source_evolve_desc);
         }
     }
 }

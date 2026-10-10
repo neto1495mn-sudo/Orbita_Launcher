@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ExecutorService executorService = Executors.newFixedThreadPool(4);
     private Map<String, Drawable> iconCache = new HashMap<>();
+    private ConnectivityManager.NetworkCallback storeNetworkCallback;
     private static final String GITHUB_ICON_BASE_URL = "https://raw.githubusercontent.com/JarJarBlinkz/LauncherIcons/main/oculus_landscape/";
 
     // RESTORED: Icon scale values from old launcher (82, 99, 125, 165, 236 dp)
@@ -2305,14 +2306,50 @@ public class MainActivity extends AppCompatActivity {
 
             for (AppInfo app : snapshot) {
                 try {
+                    Object model = StoreImageManager.imageModel(MainActivity.this, app.packageName);
+                    if (model == null) continue;
                     Glide.with(MainActivity.this)
-                            .load(app.githubIconUrl)
+                            .load(model)
                             .preload(iconWidthPx, iconHeightPx);
                 } catch (Exception e) {
                     // Ignore preload errors
                 }
             }
         });
+
+        syncStoreImages(false);
+    }
+
+    /** Loja da Meta: busca fotos novas ou mudadas e redesenha a grade quando chegam. */
+    private void syncStoreImages(boolean force) {
+        if (!StoreImageManager.isMeta(this)) return;
+        List<String> packages = new ArrayList<>();
+        synchronized (appList) {
+            for (AppInfo app : appList) packages.add(app.packageName);
+        }
+        if (packages.isEmpty()) return;
+        StoreImageManager.sync(this, packages, force, () -> {
+            if (appAdapter != null) appAdapter.notifyDataSetChanged();
+        });
+    }
+
+    /** Toda vez que o Quest conectar na internet, puxa as fotos da loja de novo. */
+    private void startStoreImageWatcher() {
+        if (storeNetworkCallback != null) return;
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) return;
+            storeNetworkCallback = new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(android.net.Network network) {
+                    runOnUiThread(() -> syncStoreImages(false));
+                }
+            };
+            cm.registerDefaultNetworkCallback(storeNetworkCallback);
+        } catch (Exception e) {
+            storeNetworkCallback = null;
+            Log.w("MainActivity", "Network watcher failed", e);
+        }
     }
 
     private String getGitHubIconUrl(String packageName) {
@@ -3856,8 +3893,20 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
+            Object model = StoreImageManager.imageModel(MainActivity.this, app.packageName);
+            if (model == null) {
+                // Loja da Meta ainda sem foto: mostra o icone original do app
+                Glide.with(MainActivity.this).clear(holder.appIcon);
+                holder.appIcon.setImageDrawable(app.icon);
+                return;
+            }
+            RequestOptions storeOptions = new RequestOptions();
+            if (model instanceof java.io.File) {
+                storeOptions = storeOptions.signature(new com.bumptech.glide.signature.ObjectKey(((java.io.File) model).lastModified()));
+            }
             Glide.with(MainActivity.this)
-                    .load(app.githubIconUrl)
+                    .load(model)
+                    .apply(storeOptions)
                     .apply(new RequestOptions()
                             .placeholder(app.icon)
                             .error(app.icon)
@@ -4372,6 +4421,10 @@ public class MainActivity extends AppCompatActivity {
         // (no maximo uma vez por dia, e so se estiver ligada em Configuracoes)
         scheduleAutoUpdateCheck();
 
+        // Fotos da loja da Meta (so quando essa opcao esta escolhida em Configuracoes)
+        startStoreImageWatcher();
+        syncStoreImages(false);
+
         // Force compositor refresh when returning from a game.
         // Simulates the screen off/on that fixes the loading overlay
         // getting stuck on top of a running game.
@@ -4543,6 +4596,16 @@ public class MainActivity extends AppCompatActivity {
             unregisterReceiver(batteryReceiver);
         } catch (IllegalArgumentException e) {
             // Receiver was not registered, ignore
+        }
+
+        if (storeNetworkCallback != null) {
+            try {
+                ((ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE))
+                        .unregisterNetworkCallback(storeNetworkCallback);
+            } catch (Exception e) {
+                // ignore
+            }
+            storeNetworkCallback = null;
         }
 
         instance = null;

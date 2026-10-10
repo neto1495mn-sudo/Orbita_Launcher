@@ -36,7 +36,7 @@ Organize your apps, track your playtime and set up the launcher your way.
 
 ### Settings
 - **Launcher:** edit mode, categories, focus trigger
-- **Appearance:** icon size and background opacity
+- **Appearance:** picture source (Evolve collection or Meta store), icon size and background opacity
 - **Startup:** start with system, reopen on close, hide Meta Store
 - **System:** native Quest settings, device information and IP address
 - **Backup and restore:** export and import categories and settings
@@ -76,5 +76,5 @@ When enabled, the launcher opens again when you tap X. During a game it stays qu
 
 Orbita is derived from **Evolve Launcher v2** by [JarJarBlinkz](https://github.com/JarJarBlinkz/Evolve_Launcher_v2). The interface was fully redesigned, the theme system and favorites were removed, and the screens were translated to Portuguese.
 
-Game cover art is loaded from the [LauncherIcons](https://github.com/JarJarBlinkz/LauncherIcons) repository by JarJarBlinkz.
+Game cover art is loaded from the [LauncherIcons](https://github.com/JarJarBlinkz/LauncherIcons) repository by JarJarBlinkz. With the Meta store option, pictures come from Meta store data mirrored daily by [MetaMetadata](https://github.com/threethan/MetaMetadata) (threethan); they are saved on the headset and checked again each time it connects to the internet.
 
