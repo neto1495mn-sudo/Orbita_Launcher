@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Identidade visual do Orbita: as mesmas cores da tela principal, usadas em todas as telas. -->
+<resources>
+    <color name="orbita_panel">#3A3B3F</color>          <!-- fundo das telas (painel principal) -->
+    <color name="orbita_sidebar">#2B2C2F</color>        <!-- barra lateral -->
+    <color name="orbita_card">#2F3034</color>           <!-- cartoes e caixas -->
+    <color name="orbita_pill">#55565B</color>           <!-- botoes em pilula -->
+    <color name="orbita_hover">#4D4E53</color>          <!-- hover / item destacado -->
+    <color name="orbita_accent">#6B8EFF</color>         <!-- item escolhido -->
+    <color name="orbita_border">#4A4B50</color>
+    <color name="orbita_text">#FFFFFF</color>
+    <color name="orbita_text_secondary">#D0D1D4</color>
+    <color name="orbita_text_muted">#9A9BA0</color>
+    <color name="orbita_danger">#FF6B6B</color>
+</resources>
