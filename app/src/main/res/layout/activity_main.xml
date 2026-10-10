@@ -66,16 +66,16 @@
             </ScrollView>
 
             <ImageView
-                android:id="@+id/navQuickSettings"
+                android:id="@+id/navPlaytime"
                 android:layout_width="46dp"
                 android:layout_height="46dp"
                 android:layout_marginBottom="10dp"
                 android:padding="11dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:contentDescription="@string/main_cd_quick_settings"
+                android:contentDescription="@string/main_cd_playtime_stats"
                 android:focusable="true"
-                android:src="@drawable/ic_nav_tune"
+                android:src="@drawable/ic_nav_timer"
                 app:tint="#FFFFFF" />
 
             <ImageView
@@ -305,7 +305,7 @@
                             android:ellipsize="end"
                             android:fontFamily="sans-serif-medium"
                             android:maxLines="1"
-                            android:maxWidth="150dp"
+                            android:maxWidth="210dp"
                             android:text="@string/main_category_all_apps"
                             android:textColor="#FFFFFF"
                             android:textSize="13sp" />
@@ -356,13 +356,5 @@
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
-    <!-- Quick Settings Panel - Overlay on the right -->
-    <include
-        android:id="@+id/quickSettingsPanel"
-        layout="@layout/panel_quick_settings"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="end" />
 
 </FrameLayout>

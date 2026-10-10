@@ -3,7 +3,6 @@
     <string name="main_cd_all_apps">Todos os apps</string>
     <string name="main_cd_playtime_stats">Estatísticas de tempo de jogo</string>
     <string name="main_cd_device_info">Informações do dispositivo</string>
-    <string name="main_cd_quick_settings">Configurações rápidas</string>
     <string name="main_cd_settings">Configurações</string>
     <string name="main_header_all">Todos</string>
     <string name="main_search_hint">Pesquisar...</string>
@@ -188,4 +187,9 @@
     <string name="main_toast_name_empty">O nome não pode ficar vazio</string>
     <string name="main_toast_edit_renamed">✅ Renomeado para: %1$s</string>
     <string name="main_toast_edit_reset">↩️ Voltou para: %1$s</string>
+
+    <string name="main_sort_custom">Personalizada</string>
+    <string name="main_sort_name">Nome (A–Z)</string>
+    <string name="main_sort_recent">Instalados recentemente</string>
+    <string name="main_sort_played">Mais jogados</string>
 </resources>

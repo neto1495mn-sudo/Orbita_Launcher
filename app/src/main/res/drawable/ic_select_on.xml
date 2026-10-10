@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bolinha de selecao com pontinho no meio (app marcado) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#59000000"
+        android:strokeColor="#FF6B8EFF"
+        android:strokeWidth="2"
+        android:pathData="M12,2A10,10 0 1,1 12,22A10,10 0 1,1 12,2z" />
+    <path
+        android:fillColor="#FF6B8EFF"
+        android:pathData="M12,7A5,5 0 1,1 12,17A5,5 0 1,1 12,7z" />
+</vector>

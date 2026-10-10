@@ -183,28 +183,6 @@ public class MainActivity extends AppCompatActivity {
     private String currentCategory = "All Apps";
 
     // Quick Settings Panel
-    private View quickSettingsPanel;
-    private ImageButton btnClosePanel;
-    private boolean isQuickSettingsVisible = false;
-    // Persistent edge tab on the right side of the screen that opens the
-    // Quick Settings drawer. Replaces the prior long-press on the settings
-    // button - the tab is always visible so the feature is discoverable.
-    private android.widget.LinearLayout quickSettingsEdgeTab;
-    private android.widget.TextView quickSettingsEdgeTabIcon;
-    // Shizuku for system-level controls (brightness, wifi toggle, reboot, power off)
-    private ShizukuManager shizukuManager;
-    // Programmatic quick-settings controls (added on top of whatever the
-    // XML panel already contains)
-    private android.widget.SeekBar brightnessSeekBar;
-    private android.widget.TextView brightnessValueLabel;
-    private android.widget.Button wifiToggleBtn;
-    private android.widget.Button bluetoothToggleBtn;
-    private android.widget.Button batterySaverToggleBtn;
-    private android.widget.Button guardianToggleBtn;
-    private QuickSettingsManager quickSettingsManager;
-    private Handler quickSettingsHandler = new Handler();
-    private Runnable quickSettingsUpdateRunnable;
-
     private BroadcastReceiver appChangeListener = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -367,9 +345,6 @@ public class MainActivity extends AppCompatActivity {
         txtWifiSignal = findViewById(R.id.txtWifiSignal);
         wifiContainer = findViewById(R.id.wifiContainer);
 
-        // Quick Settings Panel
-        quickSettingsPanel = findViewById(R.id.quickSettingsPanel);
-        btnClosePanel = findViewById(R.id.btnClosePanel);
 
         appsGrid.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         appsGrid.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -387,8 +362,6 @@ public class MainActivity extends AppCompatActivity {
         // Initialize playtime tracker
         playtimeTracker = new PlaytimeTracker(this);
 
-        // Initialize Quick Settings Manager
-        quickSettingsManager = new QuickSettingsManager(this);
 
         // Check for usage stats permission - but use cached result
         boolean permissionGranted = prefs.getBoolean(KEY_PERMISSION_GRANTED, false);
@@ -457,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        applySavedOrder(filteredList, currentCategory);
+        sortForCurrentMode(filteredList, currentCategory);
 
         // Create adapter with filtered list
         appAdapter = new AppAdapter(filteredList);
@@ -553,9 +526,6 @@ public class MainActivity extends AppCompatActivity {
         // Barra lateral (substitui os botoes flutuantes e a aba da borda)
         setupSideNav();
 
-        // Close Quick Settings button
-        btnClosePanel.setOnClickListener(v -> hideQuickSettings());
-
         appsGrid.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -571,9 +541,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         startStatusUpdates();
-
-        // Setup Quick Settings panel (volume only)
-        setupQuickSettings();
 
         // Apply current theme to entire view hierarchy
         View rootView = findViewById(android.R.id.content);
@@ -594,63 +561,6 @@ public class MainActivity extends AppCompatActivity {
         if (appsGrid == null) return;
         appsGrid.removeCallbacks(autoUpdateCheck);
         appsGrid.postDelayed(autoUpdateCheck, 8000);
-    }
-
-    // ===== QUICK SETTINGS METHODS =====
-
-    /**
-     * Quick Settings drawer - right-side drawer with volume control.
-     */
-    private void setupQuickSettings() {
-        // Volume control only
-        SeekBar volumeSeek = findViewById(R.id.seekVolume);
-        TextView volumeValue = findViewById(R.id.txtVolumeValue);
-        View btnVolumeDown = findViewById(R.id.btnVolumeDown);
-        View btnVolumeUp = findViewById(R.id.btnVolumeUp);
-
-        if (volumeSeek != null && volumeValue != null) {
-            int currentVolume = quickSettingsManager.getCurrentVolume();
-            volumeSeek.setProgress(currentVolume);
-            volumeValue.setText(currentVolume + "%");
-
-            volumeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    quickSettingsManager.setVolume(progress, seekBar, volumeValue);
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                }
-            });
-        }
-
-        if (btnVolumeDown != null) {
-            btnVolumeDown.setOnClickListener(v -> {
-                if (volumeSeek != null) {
-                    int current = volumeSeek.getProgress();
-                    volumeSeek.setProgress(Math.max(0, current - 10));
-                }
-            });
-        }
-
-        if (btnVolumeUp != null) {
-            btnVolumeUp.setOnClickListener(v -> {
-                if (volumeSeek != null) {
-                    int current = volumeSeek.getProgress();
-                    volumeSeek.setProgress(Math.min(100, current + 10));
-                }
-            });
-        }
-
-        // Brilho, Wi-Fi, Bluetooth, Tempo de jogo, Info do aparelho e Energia.
-        // Esses controles existiam no codigo mas nunca eram adicionados ao painel.
-        initializeShizukuForQuickSettings();
-        addExtendedQuickSettingsControls();
     }
 
     /**
@@ -687,6 +597,8 @@ public class MainActivity extends AppCompatActivity {
             bulkActionCountLabel.setTextColor(theme.textPrimary);
             bulkActionCountLabel.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
             bulkActionCountLabel.setGravity(android.view.Gravity.CENTER);
+            bulkActionCountLabel.setMaxLines(2);
+            bulkActionCountLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);
             bulkActionCountLabel.setPadding(0, (int)(2 * d), 0, (int)(8 * d));
             bulkActionBar.addView(bulkActionCountLabel);
 
@@ -807,7 +719,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (count > 0) {
-            bulkActionCountLabel.setText(getString(R.string.main_selected_count, count));
+            // Um app: mostra o nome dele. Varios: mostra quantos.
+            AppInfo single = count == 1 ? getSingleSelectedApp() : null;
+            if (single != null) {
+                bulkActionCountLabel.setText(CustomLabelManager.getInstance(this).getDisplayLabel(
+                        single.packageName, single.label != null ? single.label : single.packageName));
+            } else {
+                bulkActionCountLabel.setText(getString(R.string.main_selected_count, count));
+            }
             if (bulkActionBar.getVisibility() != View.VISIBLE) {
                 bulkActionBar.setVisibility(View.VISIBLE);
                 bulkActionBar.setAlpha(0f);
@@ -998,539 +917,6 @@ public class MainActivity extends AppCompatActivity {
             launchNextUninstall();
         }
     }
-
-    private void showQuickSettings() {
-        isQuickSettingsVisible = true;
-        quickSettingsPanel.setVisibility(View.VISIBLE);
-
-        // Refresh the current state of our extended controls (wifi/bt
-        // status, brightness value) so they reflect anything that may
-        // have changed outside the launcher.
-        refreshQuickSettingsState();
-
-        // Slide in animation
-        quickSettingsPanel.animate()
-                .translationX(0)
-                .alpha(1.0f)
-                .setDuration(300)
-                .start();
-
-        // Edge tab: slide off-screen with the drawer so it doesn't sit on top
-        if (quickSettingsEdgeTab != null) {
-            quickSettingsEdgeTab.animate()
-                    .translationX(quickSettingsEdgeTab.getWidth())
-                    .setDuration(300)
-                    .start();
-        }
-    }
-
-    private void hideQuickSettings() {
-        isQuickSettingsVisible = false;
-        quickSettingsPanel.animate()
-                .translationX(quickSettingsPanel.getWidth())
-                .alpha(0.0f)
-                .setDuration(300)
-                .withEndAction(() -> quickSettingsPanel.setVisibility(View.GONE))
-                .start();
-
-        // Edge tab: slide back into view
-        if (quickSettingsEdgeTab != null) {
-            quickSettingsEdgeTab.animate()
-                    .translationX(0)
-                    .setDuration(300)
-                    .start();
-        }
-    }
-
-    /**
-     * Create a persistent edge tab on the right side of the screen that
-     * opens the Quick Settings drawer when tapped. The tab is half-pill-
-     * shaped (rounded on the left, flat against the screen edge on the
-     * right) and sits vertically centered. While the drawer is open, the
-     * tab slides off-screen alongside the drawer.
-     */
-    private void addQuickSettingsEdgeTab() {
-        try {
-            float d = getResources().getDisplayMetrics().density;
-            com.neto.orbitalauncher.theme.Theme theme =
-                    com.neto.orbitalauncher.theme.ThemeManager.getInstance(this).getCurrentTheme();
-
-            // Container
-            quickSettingsEdgeTab = new android.widget.LinearLayout(this);
-            quickSettingsEdgeTab.setOrientation(android.widget.LinearLayout.VERTICAL);
-            quickSettingsEdgeTab.setGravity(android.view.Gravity.CENTER);
-            quickSettingsEdgeTab.setPadding((int)(2 * d), (int)(10 * d), (int)(2 * d), (int)(10 * d));
-            quickSettingsEdgeTab.setElevation(8 * d);
-            quickSettingsEdgeTab.setClickable(true);
-            quickSettingsEdgeTab.setFocusable(true);
-
-            // Chevron icon
-            quickSettingsEdgeTabIcon = new android.widget.TextView(this);
-            quickSettingsEdgeTabIcon.setText("‹");
-            quickSettingsEdgeTabIcon.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22);
-            quickSettingsEdgeTabIcon.setTextColor(theme.textPrimary);
-            quickSettingsEdgeTabIcon.setGravity(android.view.Gravity.CENTER);
-            quickSettingsEdgeTab.addView(quickSettingsEdgeTabIcon);
-
-            // Half-pill background: rounded on the left edge, flush right
-            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-            bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            bg.setColor(theme.bgSecondary);
-            bg.setStroke((int)(1 * d), theme.borderPrimary);
-            float r = 18 * d;
-            bg.setCornerRadii(new float[] {
-                    r, r,   // top-left
-                    0, 0,   // top-right
-                    0, 0,   // bottom-right
-                    r, r    // bottom-left
-            });
-            quickSettingsEdgeTab.setBackground(bg);
-
-            // Tap to toggle the drawer
-            quickSettingsEdgeTab.setOnClickListener(v -> {
-                if (isQuickSettingsVisible) {
-                    hideQuickSettings();
-                } else {
-                    showQuickSettings();
-                }
-            });
-
-            // Position: right edge, vertically centered
-            android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-                    (int)(26 * d),
-                    (int)(72 * d)
-            );
-            params.gravity = android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL;
-
-            addContentView(quickSettingsEdgeTab, params);
-            android.util.Log.i("MainActivity", "Quick settings edge tab added");
-        } catch (Exception e) {
-            android.util.Log.e("MainActivity", "Failed to add quick settings edge tab", e);
-        }
-    }
-
-    /**
-     * Refresh the edge tab's colors to match the current theme.
-     * Call this whenever the theme changes.
-     */
-    private void refreshQuickSettingsEdgeTabColor() {
-        if (quickSettingsEdgeTab == null) return;
-        try {
-            float d = getResources().getDisplayMetrics().density;
-            com.neto.orbitalauncher.theme.Theme theme =
-                    com.neto.orbitalauncher.theme.ThemeManager.getInstance(this).getCurrentTheme();
-            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-            bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            bg.setColor(theme.bgSecondary);
-            bg.setStroke((int)(1 * d), theme.borderPrimary);
-            float r = 18 * d;
-            bg.setCornerRadii(new float[] { r, r, 0, 0, 0, 0, r, r });
-            quickSettingsEdgeTab.setBackground(bg);
-            if (quickSettingsEdgeTabIcon != null) {
-                quickSettingsEdgeTabIcon.setTextColor(theme.textPrimary);
-            }
-        } catch (Exception e) {
-            // ignore theme refresh failures
-        }
-    }
-
-    /**
-     * Initialize Shizuku for the Quick Settings panel - powers brightness
-     * control, wifi/bluetooth toggles, reboot, and power off. If Shizuku
-     * isn't installed/authorized, the controls will degrade gracefully
-     * with helpful toast messages.
-     */
-    private void initializeShizukuForQuickSettings() {
-        try {
-            shizukuManager = new ShizukuManager(this);
-            shizukuManager.initialize(new ShizukuManager.ShizukuStatusListener() {
-                @Override
-                public void onStatusChanged(boolean available, boolean hasPermission) {
-                    android.util.Log.i("MainActivity",
-                            "Shizuku status - Available: " + available + ", Permission: " + hasPermission);
-                    // When Shizuku becomes ready, suppress the store if enabled
-                    if (available && hasPermission) {
-                        boolean suppressStore = getSharedPreferences("VRLPrefs", MODE_PRIVATE)
-                                .getBoolean("suppress_store", false);
-                        if (suppressStore) {
-                            android.util.Log.i("MainActivity", "Shizuku ready - force-stopping Meta Store");
-                            shizukuManager.executeShellCommand("am force-stop com.oculus.store");
-                        }
-                    }
-                }
-                @Override
-                public void onCommandResult(boolean success, String output) {
-                    // Most commands here don't need result feedback - the UI
-                    // reflects state changes itself. Just log for debugging.
-                    android.util.Log.d("MainActivity",
-                            "Shizuku command result: " + success + " " + output);
-                }
-            });
-        } catch (Exception e) {
-            android.util.Log.e("MainActivity", "Failed to initialize Shizuku", e);
-        }
-    }
-
-    /**
-     * Add extended controls to the Quick Settings drawer: brightness slider,
-     * WiFi toggle, Bluetooth toggle, reboot, and power off. These appear
-     * underneath whatever the XML panel already contains. The controls
-     * refresh their state every time the drawer opens.
-     */
-    private void addExtendedQuickSettingsControls() {
-        if (!(quickSettingsPanel instanceof android.view.ViewGroup)) {
-            android.util.Log.w("MainActivity",
-                    "Quick settings panel is not a ViewGroup - cannot add extended controls");
-            return;
-        }
-
-        try {
-            float d = getResources().getDisplayMetrics().density;
-            com.neto.orbitalauncher.theme.Theme theme =
-                    com.neto.orbitalauncher.theme.ThemeManager.getInstance(this).getCurrentTheme();
-
-            // If the panel has a ScrollView, target its inner container.
-            // Otherwise add directly to the panel.
-            android.view.ViewGroup container = (android.view.ViewGroup) quickSettingsPanel;
-            for (int i = 0; i < container.getChildCount(); i++) {
-                View child = container.getChildAt(i);
-                if (child instanceof android.widget.ScrollView) {
-                    android.widget.ScrollView sv = (android.widget.ScrollView) child;
-                    if (sv.getChildCount() > 0 && sv.getChildAt(0) instanceof android.view.ViewGroup) {
-                        container = (android.view.ViewGroup) sv.getChildAt(0);
-                        break;
-                    }
-                }
-            }
-
-            android.widget.LinearLayout section = new android.widget.LinearLayout(this);
-            section.setOrientation(android.widget.LinearLayout.VERTICAL);
-            section.setPadding(0, (int)(8 * d), 0, (int)(16 * d));
-
-            // --- Brightness section ---
-            android.widget.TextView brightnessLabel = new android.widget.TextView(this);
-            brightnessLabel.setText(getString(R.string.main_qs_brightness));
-            brightnessLabel.setTextColor(theme.textPrimary);
-            brightnessLabel.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
-            brightnessLabel.setPadding(0, (int)(12 * d), 0, (int)(4 * d));
-            section.addView(brightnessLabel);
-
-            android.widget.LinearLayout brightnessRow = new android.widget.LinearLayout(this);
-            brightnessRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            brightnessRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
-
-            brightnessSeekBar = new android.widget.SeekBar(this);
-            brightnessSeekBar.setMax(255);
-            brightnessSeekBar.setProgress(readCurrentBrightness());
-            android.widget.LinearLayout.LayoutParams sbParams = new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            brightnessRow.addView(brightnessSeekBar, sbParams);
-
-            brightnessValueLabel = new android.widget.TextView(this);
-            brightnessValueLabel.setText(brightnessSeekBar.getProgress() + "");
-            brightnessValueLabel.setTextColor(theme.textPrimary);
-            brightnessValueLabel.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12);
-            brightnessValueLabel.setMinWidth((int)(36 * d));
-            brightnessValueLabel.setGravity(android.view.Gravity.END);
-            brightnessValueLabel.setPadding((int)(8 * d), 0, 0, 0);
-            brightnessRow.addView(brightnessValueLabel);
-
-            section.addView(brightnessRow);
-
-            brightnessSeekBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-                @Override public void onProgressChanged(android.widget.SeekBar bar, int progress, boolean fromUser) {
-                    brightnessValueLabel.setText(progress + "");
-                }
-                @Override public void onStartTrackingTouch(android.widget.SeekBar bar) {}
-                @Override public void onStopTrackingTouch(android.widget.SeekBar bar) {
-                    setBrightnessViaShizuku(bar.getProgress());
-                }
-            });
-
-            // --- Connectivity toggles row ---
-            android.widget.LinearLayout togglesRow = new android.widget.LinearLayout(this);
-            togglesRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            togglesRow.setPadding(0, (int)(16 * d), 0, 0);
-
-            wifiToggleBtn = makeQuickSettingsButton(getString(R.string.main_qs_wifi), theme);
-            wifiToggleBtn.setOnClickListener(v -> toggleWifi());
-            android.widget.LinearLayout.LayoutParams half = new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            half.setMargins(0, 0, (int)(4 * d), 0);
-            togglesRow.addView(wifiToggleBtn, half);
-
-            bluetoothToggleBtn = makeQuickSettingsButton(getString(R.string.main_qs_bluetooth), theme);
-            bluetoothToggleBtn.setOnClickListener(v -> toggleBluetooth());
-            android.widget.LinearLayout.LayoutParams half2 = new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            half2.setMargins((int)(4 * d), 0, 0, 0);
-            togglesRow.addView(bluetoothToggleBtn, half2);
-
-            section.addView(togglesRow);
-
-            // --- Economia de bateria + Guardiao ---
-            android.widget.LinearLayout togglesRow2 = new android.widget.LinearLayout(this);
-            togglesRow2.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            togglesRow2.setPadding(0, (int)(8 * d), 0, 0);
-
-            batterySaverToggleBtn = makeQuickSettingsButton(getString(R.string.main_qs_battery_saver_off), theme);
-            batterySaverToggleBtn.setOnClickListener(v -> toggleBatterySaver());
-            android.widget.LinearLayout.LayoutParams half5 = new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            half5.setMargins(0, 0, (int)(4 * d), 0);
-            togglesRow2.addView(batterySaverToggleBtn, half5);
-
-            guardianToggleBtn = makeQuickSettingsButton(getString(R.string.main_qs_guardian_on), theme);
-            guardianToggleBtn.setOnClickListener(v -> toggleGuardian());
-            android.widget.LinearLayout.LayoutParams half6 = new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            half6.setMargins((int)(4 * d), 0, 0, 0);
-            togglesRow2.addView(guardianToggleBtn, half6);
-
-            section.addView(togglesRow2);
-
-            // --- Tempo de jogo + Info do aparelho (sairam da barra lateral) ---
-            android.widget.LinearLayout infoRow = new android.widget.LinearLayout(this);
-            infoRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            infoRow.setPadding(0, (int)(8 * d), 0, 0);
-
-            android.widget.Button playtimeBtn = makeQuickSettingsButton(getString(R.string.main_qs_playtime), theme);
-            playtimeBtn.setOnClickListener(v -> openFromQuickSettings(PlaytimeStatsActivity.class));
-            android.widget.LinearLayout.LayoutParams half3 = new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            half3.setMargins(0, 0, (int)(4 * d), 0);
-            infoRow.addView(playtimeBtn, half3);
-
-            android.widget.Button deviceBtn = makeQuickSettingsButton(getString(R.string.main_qs_device_info), theme);
-            deviceBtn.setOnClickListener(v -> openFromQuickSettings(DeviceInfoActivity.class));
-            android.widget.LinearLayout.LayoutParams half4 = new android.widget.LinearLayout.LayoutParams(
-                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            half4.setMargins((int)(4 * d), 0, 0, 0);
-            infoRow.addView(deviceBtn, half4);
-
-            section.addView(infoRow);
-
-            // --- Power buttons row (Reboot + Power Off) ---
-            android.widget.TextView powerLabel = new android.widget.TextView(this);
-            powerLabel.setText(getString(R.string.main_qs_power));
-            powerLabel.setTextColor(theme.textPrimary);
-            powerLabel.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
-            powerLabel.setPadding(0, (int)(20 * d), 0, (int)(4 * d));
-            section.addView(powerLabel);
-
-            android.widget.LinearLayout powerRow = new android.widget.LinearLayout(this);
-            powerRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-
-            android.widget.Button rebootBtn = makeQuickSettingsButton(getString(R.string.main_qs_reboot), theme);
-            rebootBtn.setOnClickListener(v -> confirmReboot());
-            powerRow.addView(rebootBtn, half);
-
-            android.widget.Button powerOffBtn = makeQuickSettingsButton(getString(R.string.main_qs_power_off), theme);
-            powerOffBtn.setOnClickListener(v -> confirmPowerOff());
-            powerRow.addView(powerOffBtn, half2);
-
-            section.addView(powerRow);
-
-            container.addView(section);
-            android.util.Log.i("MainActivity", "Extended quick settings controls added");
-        } catch (Exception e) {
-            android.util.Log.e("MainActivity", "Failed to add extended quick settings", e);
-        }
-    }
-
-    private void openFromQuickSettings(Class<?> target) {
-        hideQuickSettings();
-        startActivity(new Intent(this, target));
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-    }
-
-    private android.widget.Button makeQuickSettingsButton(String text,
-                                                          com.neto.orbitalauncher.theme.Theme theme) {
-        float d = getResources().getDisplayMetrics().density;
-        android.widget.Button btn = new android.widget.Button(this);
-        btn.setText(text);
-        btn.setTextColor(theme.textPrimary);
-        btn.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
-        btn.setAllCaps(false);
-        btn.setPadding((int)(12 * d), (int)(10 * d), (int)(12 * d), (int)(10 * d));
-        btn.setMinHeight(0);
-
-        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-        bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        bg.setCornerRadius(10 * d);
-        bg.setColor(theme.bgSecondary);
-        bg.setStroke((int)(1 * d), theme.borderPrimary);
-        btn.setBackground(bg);
-        return btn;
-    }
-
-    /**
-     * Read current screen brightness from system settings. Returns 0-255.
-     * Doesn't require any permissions for reading.
-     */
-    private int readCurrentBrightness() {
-        try {
-            return android.provider.Settings.System.getInt(getContentResolver(),
-                    android.provider.Settings.System.SCREEN_BRIGHTNESS);
-        } catch (Exception e) {
-            return 128; // mid-range fallback
-        }
-    }
-
-    /**
-     * Set screen brightness via Shizuku (writes to system settings).
-     * Falls back to a toast if Shizuku isn't available.
-     */
-    private void setBrightnessViaShizuku(int value) {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            Toast.makeText(this, getString(R.string.main_toast_shizuku_brightness), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        try {
-            shizukuManager.executeShellCommand("settings put system screen_brightness " + value);
-        } catch (Exception e) {
-            Toast.makeText(this, getString(R.string.main_toast_brightness_failed), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Toggle WiFi on/off via Shizuku (svc wifi enable/disable).
-     * On Android 10+ apps can't toggle WiFi directly, so Shizuku is required.
-     */
-    private void toggleWifi() {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            Toast.makeText(this, getString(R.string.main_toast_shizuku_wifi), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        boolean isEnabled = wifiManager != null && wifiManager.isWifiEnabled();
-        try {
-            shizukuManager.executeShellCommand(isEnabled ? "svc wifi disable" : "svc wifi enable");
-            // Refresh the toggle label after a short delay
-            new Handler(Looper.getMainLooper()).postDelayed(this::refreshQuickSettingsState, 500);
-        } catch (Exception e) {
-            Toast.makeText(this, getString(R.string.main_toast_wifi_toggle_failed), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Toggle Bluetooth on/off via Shizuku (svc bluetooth enable/disable).
-     */
-    private void toggleBluetooth() {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            Toast.makeText(this, getString(R.string.main_toast_shizuku_bluetooth), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        boolean isEnabled = adapter != null && adapter.isEnabled();
-        try {
-            shizukuManager.executeShellCommand(isEnabled ? "svc bluetooth disable" : "svc bluetooth enable");
-            new Handler(Looper.getMainLooper()).postDelayed(this::refreshQuickSettingsState, 500);
-        } catch (Exception e) {
-            Toast.makeText(this, getString(R.string.main_toast_bluetooth_toggle_failed), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /** Liga/desliga a economia de bateria do Android (via Shizuku). */
-    private void toggleBatterySaver() {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            Toast.makeText(this, getString(R.string.main_toast_shizuku_battery_saver), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        int next = isBatterySaverOn() ? 0 : 1;
-        shizukuManager.executeShellCommand("settings put global low_power " + next + "; cmd power set-mode " + next);
-        new Handler(Looper.getMainLooper()).postDelayed(this::refreshQuickSettingsState, 500);
-    }
-
-    private boolean isBatterySaverOn() {
-        android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
-        return pm != null && pm.isPowerSaveMode();
-    }
-
-    /**
-     * Pausa/volta o Guardiao do Quest (via Shizuku). Usa a propriedade de depuracao da Meta;
-     * vale ate reiniciar o Quest e pode nao funcionar em todas as versoes do sistema.
-     */
-    private void toggleGuardian() {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            Toast.makeText(this, getString(R.string.main_toast_shizuku_guardian), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        boolean pause = !isGuardianPaused();
-        shizukuManager.executeShellCommand("setprop debug.oculus.guardian_pause " + (pause ? 1 : 0));
-        prefs.edit().putBoolean("guardian_paused", pause).apply();
-        new Handler(Looper.getMainLooper()).postDelayed(this::refreshQuickSettingsState, 500);
-    }
-
-    private boolean isGuardianPaused() {
-        try {
-            Class<?> sp = Class.forName("android.os.SystemProperties");
-            String v = (String) sp.getMethod("get", String.class).invoke(null, "debug.oculus.guardian_pause");
-            if (v != null && !v.isEmpty()) return "1".equals(v);
-        } catch (Exception ignored) { }
-        return prefs.getBoolean("guardian_paused", false);
-    }
-
-    private void confirmReboot() {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            Toast.makeText(this, getString(R.string.main_toast_shizuku_reboot), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        ThemedDialog.showThemed(new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.main_reboot_title))
-                .setMessage(getString(R.string.main_reboot_message))
-                .setPositiveButton(getString(R.string.main_btn_reboot), (d, w) -> {
-                    try { shizukuManager.executeShellCommand("reboot"); }
-                    catch (Exception e) { Toast.makeText(this, getString(R.string.main_toast_reboot_failed), Toast.LENGTH_SHORT).show(); }
-                })
-                .setNegativeButton(getString(R.string.main_btn_cancel), null)
-                .create());
-    }
-
-    private void confirmPowerOff() {
-        if (shizukuManager == null || !shizukuManager.isReady()) {
-            Toast.makeText(this, getString(R.string.main_toast_shizuku_power_off), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        ThemedDialog.showThemed(new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.main_power_off_title))
-                .setMessage(getString(R.string.main_power_off_message))
-                .setPositiveButton(getString(R.string.main_btn_power_off), (d, w) -> {
-                    try { shizukuManager.executeShellCommand("reboot -p"); }
-                    catch (Exception e) { Toast.makeText(this, getString(R.string.main_toast_power_off_failed), Toast.LENGTH_SHORT).show(); }
-                })
-                .setNegativeButton(getString(R.string.main_btn_cancel), null)
-                .create());
-    }
-
-    /**
-     * Refresh the labels of the wifi/bluetooth toggle buttons and the
-     * brightness slider to reflect current system state. Called when
-     * the drawer is opened.
-     */
-    private void refreshQuickSettingsState() {
-        if (wifiToggleBtn != null) {
-            boolean wifiOn = wifiManager != null && wifiManager.isWifiEnabled();
-            wifiToggleBtn.setText(getString(wifiOn ? R.string.main_qs_wifi_on : R.string.main_qs_wifi_off));
-        }
-        if (bluetoothToggleBtn != null) {
-            BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
-            boolean btOn = ba != null && ba.isEnabled();
-            bluetoothToggleBtn.setText(getString(btOn ? R.string.main_qs_bluetooth_on : R.string.main_qs_bluetooth_off));
-        }
-        if (brightnessSeekBar != null) {
-            brightnessSeekBar.setProgress(readCurrentBrightness());
-        }
-        if (batterySaverToggleBtn != null) {
-            batterySaverToggleBtn.setText(getString(isBatterySaverOn()
-                    ? R.string.main_qs_battery_saver_on : R.string.main_qs_battery_saver_off));
-        }
-        if (guardianToggleBtn != null) {
-            guardianToggleBtn.setText(getString(isGuardianPaused()
-                    ? R.string.main_qs_guardian_paused : R.string.main_qs_guardian_on));
-        }
-    }
-
-    // ===== END QUICK SETTINGS =====
 
     private void startStatusUpdates() {
         // Remove any existing callbacks first to avoid duplicates
@@ -2284,11 +1670,7 @@ public class MainActivity extends AppCompatActivity {
      *   - PRESS:          card briefly compresses, then POPS even further on release
      *                     (scale 1.22×, +56dp lift) before settling back to hover
      */
-    /**
-     * Smoothly transitions between categories: existing cards fly out to
-     * 8 different directions, then the new category's cards fly in from
-     * 8 different directions. Same drama as the initial entry animation.
-     */
+    /** Troca de pasta com um fade simples e rapido (padrao Android). */
     private void switchToCategoryAnimated(String newCategory) {
         if (newCategory == null) return;
         if (newCategory.equals(currentCategory)) return;  // no change, skip animation
@@ -2309,78 +1691,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Animate current cards out (fly to 8 directions), then run the data swap,
-     * then animate new cards in. Total transition ~700ms.
-     */
+    /** Os apps somem rapido, troca o conteudo, e os novos aparecem com fade. */
     private void animateGridTransition(Runnable dataSwap) {
         if (appsGrid == null) {
-            Log.i("MainActivity", "animateGridTransition: appsGrid is null");
             dataSwap.run();
             return;
         }
-        int childCount = appsGrid.getChildCount();
-        Log.i("MainActivity", "animateGridTransition: animating " + childCount + " cards out");
-
-        if (childCount == 0) {
-            dataSwap.run();
-            return;
-        }
-
-        float density = getResources().getDisplayMetrics().density;
-        float distance = 200f * density;
-
-        // STEP 1: animate current cards OUT
-        for (int i = 0; i < appsGrid.getChildCount(); i++) {
-            View card = appsGrid.getChildAt(i);
-            if (card == null) continue;
-
-            // Exit direction cycles through 8 angles, same pattern as entry
-            int direction = i % 8;
-            float endX = 0f, endY = 0f;
-            switch (direction) {
-                case 0: endY = -distance; break;
-                case 1: endX = distance;  endY = -distance; break;
-                case 2: endX = distance;  break;
-                case 3: endX = distance;  endY = distance;  break;
-                case 4: endY = distance;  break;
-                case 5: endX = -distance; endY = distance;  break;
-                case 6: endX = -distance; break;
-                case 7: endX = -distance; endY = -distance; break;
-            }
-
-            card.animate().cancel();
-            card.animate()
-                    .translationX(endX)
-                    .translationY(endY)
-                    .alpha(0f)
-                    .scaleX(0.5f)
-                    .scaleY(0.5f)
-                    .rotation((direction % 2 == 0) ? 8f : -8f)
-                    .setDuration(280)
-                    .setStartDelay(i * 12L)  // light stagger on exit
-                    .setInterpolator(new android.view.animation.AccelerateInterpolator())
-                    .start();
-        }
-
-        // STEP 2: after exit animation, swap data and animate new cards in
-        appsGrid.postDelayed(() -> {
-            // Reset the one-shot flag so entry animation can play again
-            entryAnimationPlayed = false;
-            // Hide grid briefly during data swap to prevent a flash of the
-            // new items at their final position
-            appsGrid.setAlpha(0f);
-            // Perform the actual category/filter change
-            dataSwap.run();
-            // CRITICAL: notifyDataSetChanged inside dataSwap triggers a layout
-            // pass that re-binds all children. We MUST wait for that layout
-            // pass to complete before starting the entry animation, otherwise
-            // the rebind will reset the translation/alpha/scale we just set
-            // and the cards will appear at their final position instead of
-            // flying in. This was specifically breaking on categories with
-            // many items where layout takes longer.
-            appsGrid.postDelayed(() -> tryPlayEntryAnimation(0), 80);
-        }, 320);
+        appsGrid.animate().cancel();
+        appsGrid.animate()
+                .alpha(0f)
+                .setDuration(90)
+                .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                .withEndAction(() -> {
+                    dataSwap.run();
+                    appsGrid.scrollToPosition(0);
+                    appsGrid.animate()
+                            .alpha(1f)
+                            .setDuration(150)
+                            .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                            .start();
+                })
+                .start();
     }
 
     private boolean categoryBarEntryAnimated = false;
@@ -2789,6 +2120,7 @@ public class MainActivity extends AppCompatActivity {
 
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
                     app.firstInstallDate = sdf.format(new Date(pkgInfo.firstInstallTime));
+                    app.installTime = pkgInfo.firstInstallTime;
                     app.lastUpdateDate = sdf.format(new Date(pkgInfo.lastUpdateTime));
 
                     // Check if from store
@@ -3116,7 +2448,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-            applySavedOrder(newFilteredList, currentCategory);
+            sortForCurrentMode(newFilteredList, currentCategory);
 
             updateSearchStatus("", false);
 
@@ -3222,6 +2554,7 @@ public class MainActivity extends AppCompatActivity {
 
         // NEW: Install/Update info
         public String firstInstallDate = "";
+        public long installTime = 0;
         public String lastUpdateDate = "";
         public String versionName = "";
         public boolean isStoreApp = false;
@@ -3556,12 +2889,15 @@ public class MainActivity extends AppCompatActivity {
             View navAll = findViewById(R.id.navAll);
             if (navAll != null) navAll.setOnClickListener(v -> toggleSideCategoryList());
 
+            // Botao embaixo da bateria: escolhe a ordem dos apps
             View dropdown = findViewById(R.id.btnCategoryDropdown);
-            if (dropdown != null) dropdown.setOnClickListener(v -> showCategoryPopup(v));
+            if (dropdown != null) dropdown.setOnClickListener(v -> showSortMenu(v));
 
-            View navQuick = findViewById(R.id.navQuickSettings);
-            if (navQuick != null) navQuick.setOnClickListener(v -> {
-                if (isQuickSettingsVisible) hideQuickSettings(); else showQuickSettings();
+            // Reloginho: abre a tela de Tempo de jogo
+            View navPlaytime = findViewById(R.id.navPlaytime);
+            if (navPlaytime != null) navPlaytime.setOnClickListener(v -> {
+                startActivity(new Intent(this, PlaytimeStatsActivity.class));
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             });
 
             refreshCategoryDropdownLabel();
@@ -3696,6 +3032,8 @@ public class MainActivity extends AppCompatActivity {
 
     // Arrasto de app em andamento (igual ao Android: o app sai do lugar e os outros abrem espaco)
     private String draggingPackage = null;
+    // Apps que vao juntos para a pasta (todos os marcados, se o arrastado estiver entre eles)
+    private final Set<String> dragGroup = new HashSet<>();
     private boolean dragMoved = false;
     private boolean reorderedDuringDrag = false;
     private float dragStartX = Float.NaN, dragStartY = Float.NaN;
@@ -3712,7 +3050,32 @@ public class MainActivity extends AppCompatActivity {
             super(v);
             bitmap = android.graphics.Bitmap.createBitmap(Math.max(1, v.getWidth()), Math.max(1, v.getHeight()),
                     android.graphics.Bitmap.Config.ARGB_8888);
-            v.draw(new android.graphics.Canvas(bitmap));
+            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+            v.draw(canvas);
+            roundIconCorners(v, canvas);
+        }
+
+        /** O desenho em bitmap ignora o recorte arredondado da miniatura; recorta os cantos aqui. */
+        private static void roundIconCorners(View card, android.graphics.Canvas canvas) {
+            View icon = card.findViewById(R.id.appIcon);
+            if (icon == null) return;
+            float left = 0f, top = 0f;
+            for (View cur = icon; cur != null && cur != card; ) {
+                left += cur.getLeft();
+                top += cur.getTop();
+                android.view.ViewParent parent = cur.getParent();
+                cur = parent instanceof View ? (View) parent : null;
+            }
+            android.graphics.RectF r = new android.graphics.RectF(left, top, left + icon.getWidth(), top + icon.getHeight());
+            float radius = 14 * card.getResources().getDisplayMetrics().density;
+            android.graphics.Path corners = new android.graphics.Path();
+            corners.addRect(r, android.graphics.Path.Direction.CW);
+            android.graphics.Path rounded = new android.graphics.Path();
+            rounded.addRoundRect(r, radius, radius, android.graphics.Path.Direction.CW);
+            corners.op(rounded, android.graphics.Path.Op.DIFFERENCE);
+            android.graphics.Paint clear = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            clear.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR));
+            canvas.drawPath(corners, clear);
         }
 
         @Override
@@ -3754,6 +3117,9 @@ public class MainActivity extends AppCompatActivity {
 
             currentDragShadow = new AppDragShadow(v);
             draggingPackage = app.packageName;
+            dragGroup.clear();
+            if (selectedApps.contains(app.packageName)) dragGroup.addAll(selectedApps);
+            dragGroup.add(app.packageName);
             dragMoved = false;
             reorderedDuringDrag = false;
             dragStartX = Float.NaN;
@@ -3866,7 +3232,8 @@ public class MainActivity extends AppCompatActivity {
         currentDragShadow = null;
         if (draggingPackage == null) return;
         draggingPackage = null;
-        if (reorderedDuringDrag) saveCurrentOrder();
+        dragGroup.clear();
+        if (reorderedDuringDrag) switchToCustomOrder();
         reorderedDuringDrag = false;
         dragMoved = false;
         if (appsGrid != null) appsGrid.setItemAnimator(null);
@@ -3904,6 +3271,7 @@ public class MainActivity extends AppCompatActivity {
     private void dropAppOnCategory(String packageName, String key) {
         if (packageName == null) return;
         Set<String> one = new HashSet<>();
+        if (dragGroup.contains(packageName)) one.addAll(dragGroup);
         one.add(packageName);
         if ("All Apps".equals(key)) {
             int removed = removeAppsFromCategoriesSync(one);
@@ -3912,7 +3280,7 @@ public class MainActivity extends AppCompatActivity {
             int moved = moveAppsToCategorySync(key, one);
             Toast.makeText(this, getString(R.string.main_toast_moved_to_category, moved, displayCategoryName(key)), Toast.LENGTH_SHORT).show();
         }
-        selectedApps.remove(packageName);
+        selectedApps.removeAll(one);
         updateBulkActionBarVisibility();
         filterApps(searchEditText != null ? searchEditText.getText().toString() : "");
         if (appAdapter != null) appAdapter.notifyDataSetChanged();
@@ -3987,30 +3355,108 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    /** Lista as categorias num menu; cada item dispara o clique do botao original da barra de categorias. */
-    private void showCategoryPopup(View anchor) {
-        if (categoryBar == null) return;
-        android.widget.PopupMenu menu = new android.widget.PopupMenu(this, anchor);
-        final java.util.List<Button> buttons = new java.util.ArrayList<>();
-        for (int i = 0; i < categoryBar.getChildCount(); i++) {
-            View child = categoryBar.getChildAt(i);
-            if (child instanceof Button) {
-                menu.getMenu().add(0, buttons.size(), buttons.size(), ((Button) child).getText());
-                buttons.add((Button) child);
-            }
+    // Ordem dos apps (vale para todas as pastas)
+    private static final String KEY_SORT_MODE = "sort_mode";
+    private static final String KEY_CUSTOM_BASE = "sort_custom_base";
+    private static final String SORT_CUSTOM = "custom";
+    private static final String SORT_NAME = "name";
+    private static final String SORT_RECENT = "recent";
+    private static final String SORT_PLAYED = "played";
+    private static final String[] SORT_MODES = {SORT_CUSTOM, SORT_NAME, SORT_RECENT, SORT_PLAYED};
+
+    private String getSortMode() {
+        return prefs.getString(KEY_SORT_MODE, SORT_RECENT);
+    }
+
+    private String sortModeLabel(String mode) {
+        switch (mode) {
+            case SORT_CUSTOM: return getString(R.string.main_sort_custom);
+            case SORT_NAME: return getString(R.string.main_sort_name);
+            case SORT_PLAYED: return getString(R.string.main_sort_played);
+            default: return getString(R.string.main_sort_recent);
         }
+    }
+
+    /** Menu "Ordenar por", simples como o do Windows. */
+    private void showSortMenu(View anchor) {
+        android.widget.PopupMenu menu = new android.widget.PopupMenu(this, anchor);
+        String current = getSortMode();
+        for (int i = 0; i < SORT_MODES.length; i++) {
+            menu.getMenu().add(0, i, i, sortModeLabel(SORT_MODES[i]))
+                    .setCheckable(true)
+                    .setChecked(SORT_MODES[i].equals(current));
+        }
+        menu.getMenu().setGroupCheckable(0, true, true);
         menu.setOnMenuItemClickListener(item -> {
-            buttons.get(item.getItemId()).performClick();
+            String mode = SORT_MODES[item.getItemId()];
+            if (!mode.equals(getSortMode())) {
+                prefs.edit().putString(KEY_SORT_MODE, mode).apply();
+                refreshCategoryDropdownLabel();
+                animateGridTransition(() -> filterApps(searchEditText != null ? searchEditText.getText().toString() : ""));
+            }
             return true;
         });
         menu.show();
+    }
+
+    /** Coloca a lista na ordem escolhida. */
+    private void sortForCurrentMode(List<AppInfo> list, String category) {
+        String mode = getSortMode();
+        if (SORT_CUSTOM.equals(mode)) {
+            // Personalizada: parte da ordem que estava antes e aplica o que foi arrastado
+            sortByMode(list, prefs.getString(KEY_CUSTOM_BASE, SORT_RECENT));
+            applySavedOrder(list, category);
+        } else {
+            sortByMode(list, mode);
+        }
+    }
+
+    private void sortByMode(List<AppInfo> list, String mode) {
+        if (SORT_NAME.equals(mode)) {
+            final CustomLabelManager labels = CustomLabelManager.getInstance(this);
+            list.sort((a, b) -> labels.getDisplayLabel(a.packageName, a.label != null ? a.label : a.packageName)
+                    .compareToIgnoreCase(labels.getDisplayLabel(b.packageName, b.label != null ? b.label : b.packageName)));
+        } else if (SORT_PLAYED.equals(mode)) {
+            Map<String, Long> played = new HashMap<>();
+            try {
+                if (playtimeTracker != null) played = playtimeTracker.getAllTimePlaytime();
+            } catch (Exception e) {
+                Log.w("MainActivity", "playtime for sorting failed", e);
+            }
+            final Map<String, Long> p = played != null ? played : new HashMap<>();
+            list.sort((a, b) -> Long.compare(
+                    p.containsKey(b.packageName) ? p.get(b.packageName) : 0L,
+                    p.containsKey(a.packageName) ? p.get(a.packageName) : 0L));
+        } else if (SORT_RECENT.equals(mode)) {
+            list.sort((a, b) -> Long.compare(b.installTime, a.installTime));
+        }
+        // SORT_CUSTOM sozinho nao reordena
+    }
+
+    /**
+     * O usuario arrastou um app: a ordem vira Personalizada a partir do que esta na tela.
+     * As outras pastas continuam como estavam (mesma ordem de antes, sem arrasto salvo).
+     */
+    private void switchToCustomOrder() {
+        SharedPreferences.Editor editor = prefs.edit();
+        String mode = getSortMode();
+        if (!SORT_CUSTOM.equals(mode)) {
+            for (String key : prefs.getAll().keySet()) {
+                if (key.startsWith(KEY_ORDER_PREFIX)) editor.remove(key);
+            }
+            editor.putString(KEY_CUSTOM_BASE, mode);
+            editor.putString(KEY_SORT_MODE, SORT_CUSTOM);
+        }
+        editor.apply();
+        saveCurrentOrder();
+        refreshCategoryDropdownLabel();
     }
 
     private void refreshCategoryDropdownLabel() {
         TextView label = findViewById(R.id.txtCategoryDropdown);
         TextView title = findViewById(R.id.txtHeaderTitle);
         String name = currentCategory != null ? currentCategory : "All Apps";
-        if (label != null) label.setText(displayCategoryName(name));
+        if (label != null) label.setText(sortModeLabel(getSortMode()));
         if (title != null) title.setText(name.equals("All Apps") ? getString(R.string.main_header_all) : displayCategoryName(name));
     }
 
@@ -4380,8 +3826,14 @@ public class MainActivity extends AppCompatActivity {
             holder.appName.setText(displayLabel);
             holder.appVersion.setVisibility(View.GONE); // Hide the version badge completely
 
-            // Sem selo de letra da pasta em cima do app
-            holder.categoryBadge.setVisibility(View.GONE);
+            // Bolinha de selecao: aparece em todos os apps quando ha 2 ou mais marcados
+            if (selectedApps.size() >= 2) {
+                holder.selectCircle.setVisibility(View.VISIBLE);
+                holder.selectCircle.setImageResource(selectedApps.contains(app.packageName)
+                        ? R.drawable.ic_select_on : R.drawable.ic_select_off);
+            } else {
+                holder.selectCircle.setVisibility(View.GONE);
+            }
 
             loadAppIcon(holder, app);
 
@@ -4415,7 +3867,8 @@ public class MainActivity extends AppCompatActivity {
                 // that appears when something is selected.
                 // Segurando, da para arrastar o app ate uma pasta da barra lateral.
                 holder.cardView.setOnLongClickListener(v -> {
-                    toggleAppSelection(app);
+                    // Segurar um app ja marcado nao desmarca: assim da para arrastar varios juntos
+                    if (!selectedApps.contains(app.packageName)) toggleAppSelection(app);
                     startAppDrag(v, app);
                     return true;
                 });
@@ -4473,7 +3926,7 @@ public class MainActivity extends AppCompatActivity {
             MaterialCardView cardView;
             ImageView appIcon;
             TextView appName;
-            TextView categoryBadge;
+            ImageView selectCircle;
             TextView appVersion;
 
             public ViewHolder(View itemView) {
@@ -4481,7 +3934,7 @@ public class MainActivity extends AppCompatActivity {
                 cardView = itemView.findViewById(R.id.cardApp);
                 appIcon = itemView.findViewById(R.id.appIcon);
                 appName = itemView.findViewById(R.id.appName);
-                categoryBadge = itemView.findViewById(R.id.categoryBadge);
+                selectCircle = itemView.findViewById(R.id.selectCircle);
                 appVersion = itemView.findViewById(R.id.appVersion);
             }
         }
@@ -4942,11 +4395,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (isQuickSettingsVisible) {
-            hideQuickSettings();
-            return;
-        }
-
         if (isEditMode && !selectedApps.isEmpty()) {
             clearSelection();
             return;
@@ -5111,7 +4559,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (shizukuManager != null) shizukuManager.cleanup();
 
         // "Reabrir ao fechar": fechou no X -> pede para reabrir (o servico ignora se ha jogo aberto)
         try {
