@@ -114,7 +114,7 @@ public class SettingsActivity extends AppCompatActivity {
         SeekBar seekBgOpacity = findViewById(R.id.seekBgOpacity);
         TextView txtBgOpacity = findViewById(R.id.txtBgOpacity);
         AppCompatButton btnManageCategories = findViewById(R.id.btnManageCategories);
-        AppCompatButton btnBack = findViewById(R.id.btnBack);
+        View btnBack = findViewById(R.id.btnBack);
         AppCompatButton btnGameStats = findViewById(R.id.btnGameStats);
         AppCompatButton btnDeviceInfo = findViewById(R.id.btnDeviceInfo);
         AppCompatButton btnUsageAccess = findViewById(R.id.btnUsageAccess);
@@ -139,7 +139,7 @@ public class SettingsActivity extends AppCompatActivity {
         if (autoRestartStatus != null) {
             boolean bootEnabled = prefs.getBoolean(KEY_AUTO_START, true);
             autoRestartStatus.setText(getString(bootEnabled ? R.string.set_status_on : R.string.set_status_off));
-            autoRestartStatus.setTextColor(bootEnabled ? 0xFF66BB6A : 0xFF666666);
+            autoRestartStatus.setTextColor(bootEnabled ? 0xFF66BB6A : 0xFF9A9BA0);
         }
 
         // Setup Icon Size SeekBar - maps to old launcher scale values (82-236 dp)
@@ -216,7 +216,7 @@ public class SettingsActivity extends AppCompatActivity {
             TextView bootStatus = findViewById(R.id.autoRestartStatus);
             if (bootStatus != null) {
                 bootStatus.setText(getString(c ? R.string.set_status_on : R.string.set_status_off));
-                bootStatus.setTextColor(c ? 0xFF66BB6A : 0xFF666666);
+                bootStatus.setTextColor(c ? 0xFF66BB6A : 0xFF9A9BA0);
             }
             Toast.makeText(this, getString(c ? R.string.set_toast_autostart_on : R.string.set_toast_autostart_off), Toast.LENGTH_SHORT).show();
         });
@@ -317,6 +317,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Setup version display and update checker
         setupVersionAndUpdates();
+
+        // Barra lateral: troca a secao mostrada a direita
+        setupSectionNav();
 
         // Apply theme FIRST to entire activity
         View rootView = findViewById(android.R.id.content);
@@ -457,9 +460,8 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Always show "Abrir" - Settings is built into Android, always available
         btn.setText(R.string.set_open);
-        btn.setBackgroundResource(R.drawable.bg_button_pill);
-        btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
-                android.graphics.Color.parseColor("#4CAF50")));
+        btn.setBackgroundResource(R.drawable.orbita_bg_pill);
+        btn.setBackgroundTintList(null);
         btn.setTextColor(android.graphics.Color.WHITE);
         btn.setOnClickListener(v -> goToSettings());
     }
@@ -553,6 +555,53 @@ public class SettingsActivity extends AppCompatActivity {
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    // ===== SECOES (barra lateral) =====
+
+    private static final String KEY_LAST_SECTION = "settings_last_section";
+
+    /** Itens da barra lateral, na mesma ordem de SECTION_IDS e SECTION_TITLES. */
+    private static final int[] NAV_IDS = {
+            R.id.settingsNavGeneral, R.id.settingsNavAppearance, R.id.settingsNavApps,
+            R.id.settingsNavQuest, R.id.settingsNavPlaytime, R.id.settingsNavUpdates,
+            R.id.settingsNavBackup
+    };
+    private static final int[] SECTION_IDS = {
+            R.id.settingsSectionGeneral, R.id.settingsSectionAppearance, R.id.settingsSectionApps,
+            R.id.settingsSectionQuest, R.id.settingsSectionPlaytime, R.id.settingsSectionUpdates,
+            R.id.settingsSectionBackup
+    };
+    private static final int[] SECTION_TITLES = {
+            R.string.set_nav_general, R.string.set_nav_appearance, R.string.set_nav_apps,
+            R.string.set_nav_quest, R.string.set_nav_playtime, R.string.set_nav_updates,
+            R.string.set_nav_backup
+    };
+
+    private void setupSectionNav() {
+        for (int i = 0; i < NAV_IDS.length; i++) {
+            View item = findViewById(NAV_IDS[i]);
+            if (item == null) continue;
+            final int index = i;
+            item.setOnClickListener(v -> showSection(index));
+        }
+        showSection(prefs.getInt(KEY_LAST_SECTION, 0));
+    }
+
+    /** Mostra so a secao escolhida, marca o item da barra lateral e lembra a escolha. */
+    private void showSection(int index) {
+        if (index < 0 || index >= SECTION_IDS.length) index = 0;
+        for (int i = 0; i < SECTION_IDS.length; i++) {
+            View section = findViewById(SECTION_IDS[i]);
+            if (section != null) section.setVisibility(i == index ? View.VISIBLE : View.GONE);
+            View item = findViewById(NAV_IDS[i]);
+            if (item != null) item.setSelected(i == index);
+        }
+        TextView title = findViewById(R.id.settingsSectionTitle);
+        if (title != null) title.setText(SECTION_TITLES[index]);
+        View scroll = findViewById(R.id.settingsScroll);
+        if (scroll != null) scroll.scrollTo(0, 0);
+        prefs.edit().putInt(KEY_LAST_SECTION, index).apply();
     }
 
     // ===== USAGE ACCESS PERMISSION =====
@@ -653,13 +702,13 @@ public class SettingsActivity extends AppCompatActivity {
     private void updateUsageAccessButton(AppCompatButton btn) {
         if (hasUsageStatsPermission()) {
             btn.setText(R.string.set_usage_granted);
-            btn.setSupportBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50")));
+            btn.setBackgroundResource(R.drawable.orbita_bg_pill);
         } else {
+            // Falta a permissao: botao em destaque (azul) para chamar atencao
             btn.setText(R.string.set_usage_grant_btn);
-            btn.setSupportBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#F44336")));
+            btn.setBackgroundResource(R.drawable.orbita_bg_pill_accent);
         }
+        btn.setSupportBackgroundTintList(null);
     }
 
     private void requestUsageAccessPermission(AppCompatButton btn) {

@@ -1,489 +1,506 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Tempo de jogo: mesmo visual da tela principal (painel cinza + barra lateral arredondada). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/playtimeRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/dialog_background"
-    android:padding="12dp">
+    android:background="@color/orbita_panel"
+    android:orientation="horizontal"
+    android:tag="theme_ignore">
 
-    <!-- Header with icon and title -->
+    <!-- BARRA LATERAL: periodos + voltar -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
-
-        <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/ic_vr_headset"
-            android:tint="#6B8EFF" />
+        android:id="@+id/playtimeSideNav"
+        android:layout_width="120dp"
+        android:layout_height="match_parent"
+        android:background="@color/orbita_sidebar"
+        android:orientation="vertical"
+        android:paddingStart="10dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="14dp"
+        android:tag="theme_ignore">
 
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/play_title"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:id="@+id/rangeToday"
+            style="@style/PlaytimeSideItem"
+            android:text="@string/play_tab_today" />
 
-        <ImageView
-            android:id="@+id/btnResetStats"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/ic_delete"
-            android:tint="#FF6B6B"
-            android:padding="4dp" />
+        <TextView
+            android:id="@+id/rangeWeek"
+            style="@style/PlaytimeSideItem"
+            android:text="@string/play_tab_week" />
 
-        <ImageView
-            android:id="@+id/btnViewToggle"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/ic_view_module"
-            android:tint="#6B8EFF"
-            android:padding="4dp" />
+        <TextView
+            android:id="@+id/rangeMonth"
+            style="@style/PlaytimeSideItem"
+            android:text="@string/play_tab_month" />
 
-        <ImageView
-            android:id="@+id/btnRefresh"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_refresh"
-            android:tint="#6B8EFF"
-            android:padding="4dp" />
+        <TextView
+            android:id="@+id/rangeAllTime"
+            style="@style/PlaytimeSideItem"
+            android:text="@string/play_tab_all_time" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/navBack"
+            style="@style/PlaytimeSideItem"
+            android:layout_marginBottom="0dp"
+            android:text="@string/play_back" />
     </LinearLayout>
 
-    <!-- Permission Card -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/permissionCard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:visibility="gone"
-        app:cardBackgroundColor="#332222"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp">
+    <!-- CONTEUDO -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="12dp">
 
+        <!-- Cabecalho: titulo + botoes em pilula -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:gravity="center">
-
-            <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginBottom="8dp"
-                android:src="@drawable/ic_settings"
-                android:tint="#FF6B6B" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/play_perm_title"
-                android:textColor="#FF6B6B"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/play_perm_body"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:gravity="center"
-                android:layout_marginBottom="12dp" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnGrantPermission"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:backgroundTint="#6B8EFF"
-                android:text="@string/play_open_settings"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Time Range Selector -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabTimeRange"
-        android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:layout_marginBottom="8dp"
-        app:tabBackground="@drawable/category_button_background"
-        app:tabIndicatorColor="#6B8EFF"
-        app:tabIndicatorHeight="2dp"
-        app:tabSelectedTextColor="#6B8EFF"
-        app:tabTextColor="#FFFFFF"
-        app:tabMode="fixed"
-        app:tabGravity="fill">
-
-        <com.google.android.material.tabs.TabItem android:text="@string/play_tab_today" />
-        <com.google.android.material.tabs.TabItem android:text="@string/play_tab_week" />
-        <com.google.android.material.tabs.TabItem android:text="@string/play_tab_month" />
-        <com.google.android.material.tabs.TabItem android:text="@string/play_tab_all_time" />
-
-    </com.google.android.material.tabs.TabLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="16dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/play_all_time_note"
-            android:textColor="#FF0000"
-            android:textSize="12sp" />
-
-    </LinearLayout>
-
-    <!-- Summary Stats Cards -->
-    <LinearLayout
-        android:id="@+id/summaryStatsContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="16dp">
-
-
-
-        <!-- Total Playtime -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="0dp"
-            android:layout_height="80dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            app:cardBackgroundColor="#1E1E1E"
-            app:cardCornerRadius="8dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/play_stat_total"
-                    android:textColor="#808080"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/txtTotalPlaytime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/play_zero_hours"
-                    android:textColor="#6B8EFF"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Most Played -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="0dp"
-            android:layout_height="80dp"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            app:cardBackgroundColor="#1E1E1E"
-            app:cardCornerRadius="8dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/play_stat_most_played"
-                    android:textColor="#808080"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/txtMostPlayed"
-                    android:layout_width="93dp"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@string/play_none"
-                    android:textColor="#4CAF50"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Games Count -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="0dp"
-            android:layout_height="80dp"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            app:cardBackgroundColor="#1E1E1E"
-            app:cardCornerRadius="8dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/play_stat_games"
-                    android:textColor="#808080"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/txtGameCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="#FF9800"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-    </LinearLayout>
-
-    <!-- Currently Playing Card -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/currentlyPlayingCard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:visibility="gone"
-        app:cardBackgroundColor="#1E5E1E"
-        app:cardCornerRadius="8dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginBottom="14dp"
             android:gravity="center_vertical"
-            android:padding="8dp">
+            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginEnd="8dp"
-                android:src="@drawable/ic_play"
-                android:tint="#4CAF50" />
-
-            <TextView
-                android:id="@+id/txtCurrentlyPlaying"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/play_currently_playing_label"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/txtCurrentPlaytime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0m"
-                android:textColor="#4CAF50"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Playtime List Header -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="4dp">
-
-        <!-- Playtime List Header - Matching the single line item layout -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="8dp"
-            android:weightSum="10">
-
-            <!-- Playtime List Header - Matching the updated single line item layout -->
-            <LinearLayout
-                android:id="@+id/listHeadersContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="8dp"
-                android:weightSum="10"
-                android:background="#1A1A1A">
-
-                <!-- App / Game - 25% (matches txtAppName weight 2.5) -->
                 <TextView
-                    android:layout_width="0dp"
+                    android:id="@+id/txtPlaytimeTitle"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="2.5"
-                    android:text="@string/play_col_app_game"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:tag="theme_ignore"
+                    android:text="@string/play_title"
+                    android:textColor="@color/orbita_text"
+                    android:textSize="22sp" />
+
+                <TextView
+                    android:id="@+id/txtLastUpdated"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
                     android:maxLines="1"
-                    android:ellipsize="end" />
-
-                <!-- Version - 20% (matches txtBuildVersion weight 2.0) -->
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="2.0"
-                    android:text="@string/play_col_current_version"
-                    android:textColor="#FFA500"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:maxLines="1"
-                    android:paddingHorizontal="4dp"
-                    android:ellipsize="end" />
-
-                <!-- Playtime - 12% (matches txtPlaytime weight 1.2) -->
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:text="@string/play_col_playtime"
-                    android:textColor="#6B8EFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:gravity="end"
-                    android:maxLines="1"
-                    android:paddingHorizontal="2dp"
-                    android:ellipsize="end" />
-
-                <!-- Percentage - 8% (matches txtPercentage weight 0.8) -->
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:text="%"
-                    android:textColor="#4CAF50"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:maxLines="1" />
-
-                <!-- First Installed - 12% (matches txtInstallDate weight 1.2) -->
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:text="@string/play_col_installed"
-                    android:textColor="#808080"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:paddingHorizontal="2dp"
-                    android:ellipsize="end" />
-
-                <!-- Last Updated - 12% (matches txtUpdateDate weight 1.2) -->
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:text="@string/play_col_updated"
-                    android:textColor="#808080"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:paddingHorizontal="2dp"
-                    android:ellipsize="end" />
-
-                <!-- Type - 11% (matches txtType weight 1.1, moved to end) -->
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.1"
-                    android:text="@string/play_col_type"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:layout_marginStart="2dp" />
-
+                    android:tag="theme_ignore"
+                    android:text="@string/play_last_updated_just_now"
+                    android:textColor="@color/orbita_text_muted"
+                    android:textSize="12sp" />
             </LinearLayout>
 
+            <ImageView
+                android:id="@+id/btnRefresh"
+                style="@style/PlaytimePillButton"
+                android:contentDescription="@string/play_cd_refresh"
+                android:src="@drawable/ic_refresh" />
+
+            <ImageView
+                android:id="@+id/btnResetStats"
+                style="@style/PlaytimePillButton"
+                android:contentDescription="@string/play_clear_title"
+                android:src="@drawable/ic_delete" />
+
+            <ImageView
+                android:id="@+id/btnViewToggle"
+                style="@style/PlaytimePillButton"
+                android:layout_marginEnd="0dp"
+                android:contentDescription="@string/play_view_highlight"
+                android:src="@drawable/ic_view_module" />
         </LinearLayout>
 
-        <TextView
-            android:layout_width="70dp"
-            android:layout_height="wrap_content"
-            android:text="@string/play_col_type"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:gravity="center" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
-        <TextView
-            android:layout_width="60dp"
-            android:layout_height="wrap_content"
-            android:text="@string/play_col_version"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:gravity="center" />
+            <!-- ============ PERMISSAO ============ -->
+            <LinearLayout
+                android:id="@+id/permissionCard"
+                android:layout_width="520dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@drawable/orbita_bg_card"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="28dp"
+                android:tag="theme_ignore"
+                android:visibility="gone">
 
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="@drawable/orbita_bg_pill"
+                    android:importantForAccessibility="no"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_nav_timer"
+                    android:tag="theme_ignore"
+                    android:tint="@color/orbita_text" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:tag="theme_ignore"
+                    android:text="@string/play_perm_title"
+                    android:textColor="@color/orbita_text"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="3dp"
+                    android:tag="theme_ignore"
+                    android:text="@string/play_perm_body"
+                    android:textColor="@color/orbita_text_secondary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/btnGrantPermission"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/orbita_bg_pill_accent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:tag="theme_ignore"
+                    android:text="@string/play_open_settings"
+                    android:textColor="@color/orbita_text"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- ============ VISTA 1: LISTA ============ -->
+            <LinearLayout
+                android:id="@+id/viewList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/summaryStatsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        style="@style/PlaytimeSummaryCard"
+                        android:layout_marginEnd="10dp">
+
+                        <TextView
+                            style="@style/PlaytimeSummaryLabel"
+                            android:text="@string/play_stat_total" />
+
+                        <TextView
+                            android:id="@+id/txtTotalPlaytime"
+                            style="@style/PlaytimeSummaryValue"
+                            android:text="@string/play_zero_hours" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        style="@style/PlaytimeSummaryCard"
+                        android:layout_marginEnd="10dp">
+
+                        <TextView
+                            style="@style/PlaytimeSummaryLabel"
+                            android:text="@string/play_stat_most_played" />
+
+                        <TextView
+                            android:id="@+id/txtMostPlayed"
+                            style="@style/PlaytimeSummaryValue"
+                            android:text="@string/play_none" />
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/PlaytimeSummaryCard">
+
+                        <TextView
+                            style="@style/PlaytimeSummaryLabel"
+                            android:text="@string/play_stat_games" />
+
+                        <TextView
+                            android:id="@+id/txtGameCount"
+                            style="@style/PlaytimeSummaryValue"
+                            android:text="0" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Jogando agora (so aparece quando ha algo aberto) -->
+                <LinearLayout
+                    android:id="@+id/currentlyPlayingCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/orbita_bg_card"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp"
+                    android:tag="theme_ignore"
+                    android:visibility="gone">
+
+                    <View
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/playtime_dot_live"
+                        android:tag="theme_ignore" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:tag="theme_ignore"
+                        android:text="@string/play_stat_now"
+                        android:textColor="@color/orbita_text_muted"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/txtCurrentlyPlaying"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxLines="1"
+                        android:tag="theme_ignore"
+                        android:textColor="@color/orbita_text"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/txtCurrentPlaytime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
+                        android:textColor="@color/orbita_accent"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/playtimeList"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:paddingBottom="8dp"
+                    android:scrollbars="none" />
+            </LinearLayout>
+
+            <!-- ============ VISTA 2: DESTAQUE ============ -->
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/viewHighlight"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:overScrollMode="never"
+                android:scrollbars="none"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <!-- Cartao grande: mais jogado -->
+                        <LinearLayout
+                            android:id="@+id/hlHeroCard"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="12dp"
+                            android:layout_weight="3"
+                            android:background="@drawable/orbita_bg_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="@drawable/playtime_fg_card"
+                            android:orientation="vertical"
+                            android:padding="14dp"
+                            android:tag="theme_ignore">
+
+                            <ImageView
+                                android:id="@+id/hlHeroThumb"
+                                android:layout_width="match_parent"
+                                android:layout_height="190dp"
+                                android:background="@drawable/bg_thumb_rounded"
+                                android:clipToOutline="true"
+                                android:contentDescription="@string/play_game_cover"
+                                android:scaleType="centerCrop"
+                                android:tag="theme_ignore" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:tag="theme_ignore"
+                                android:text="@string/play_stat_most_played"
+                                android:textColor="@color/orbita_text_muted"
+                                android:textSize="12sp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/hlHeroName"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:ellipsize="end"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:maxLines="1"
+                                    android:tag="theme_ignore"
+                                    android:text="@string/play_none"
+                                    android:textColor="@color/orbita_text"
+                                    android:textSize="20sp" />
+
+                                <TextView
+                                    android:id="@+id/hlHeroTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:tag="theme_ignore"
+                                    android:text="@string/play_zero_hours"
+                                    android:textColor="@color/orbita_accent"
+                                    android:textSize="20sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Resumo empilhado -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                style="@style/PlaytimeSummaryCard"
+                                android:layout_width="match_parent"
+                                android:layout_weight="0"
+                                android:layout_marginBottom="10dp">
+
+                                <TextView
+                                    style="@style/PlaytimeSummaryLabel"
+                                    android:text="@string/play_stat_total" />
+
+                                <TextView
+                                    android:id="@+id/hlTotal"
+                                    style="@style/PlaytimeSummaryValue"
+                                    android:text="@string/play_zero_hours" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                style="@style/PlaytimeSummaryCard"
+                                android:layout_width="match_parent"
+                                android:layout_weight="0"
+                                android:layout_marginBottom="10dp">
+
+                                <TextView
+                                    style="@style/PlaytimeSummaryLabel"
+                                    android:text="@string/play_stat_games_used" />
+
+                                <TextView
+                                    android:id="@+id/hlGames"
+                                    style="@style/PlaytimeSummaryValue"
+                                    android:text="0" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/hlNowCard"
+                                style="@style/PlaytimeSummaryCard"
+                                android:layout_width="match_parent"
+                                android:layout_weight="0"
+                                android:visibility="gone">
+
+                                <TextView
+                                    style="@style/PlaytimeSummaryLabel"
+                                    android:text="@string/play_stat_now" />
+
+                                <TextView
+                                    android:id="@+id/hlNowName"
+                                    style="@style/PlaytimeSummaryValue"
+                                    android:textSize="16sp" />
+
+                                <TextView
+                                    android:id="@+id/hlNowTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:tag="theme_ignore"
+                                    android:textColor="@color/orbita_accent"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/hlOthersLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
+                        android:text="@string/play_other_apps"
+                        android:textColor="@color/orbita_text_secondary"
+                        android:textSize="15sp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/playtimeGrid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:overScrollMode="never" />
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- Nada registrado no periodo -->
+            <TextView
+                android:id="@+id/txtEmpty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@drawable/orbita_bg_card"
+                android:gravity="center"
+                android:paddingStart="24dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="16dp"
+                android:tag="theme_ignore"
+                android:text="@string/play_empty"
+                android:textColor="@color/orbita_text_secondary"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </FrameLayout>
     </LinearLayout>
-
-    <!-- Playtime RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/playtimeList"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scrollbars="vertical" />
-
-    <!-- Footer -->
-    <TextView
-        android:id="@+id/txtLastUpdated"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/play_last_updated_just_now"
-        android:textColor="#808080"
-        android:textSize="10sp"
-        android:gravity="center"
-        android:layout_marginTop="8dp" />
-
-    <!-- Back Button -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnBack"
-        android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:backgroundTint="#333333"
-        android:text="@string/play_back"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:layout_marginTop="8dp" />
-
 </LinearLayout>

@@ -1,85 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Gerenciador de armazenamento: painel cinza, cabecalho com Voltar/Ordenar em pilula e lista de cartoes arredondados. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/orbita_panel"
     android:orientation="vertical"
-    android:background="#121212">
+    android:tag="theme_ignore">
 
-    <!-- Header -->
+    <!-- Cabecalho: Voltar + titulo/resumo + ordenacao -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#1A1A1A"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="12dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/mgr_title"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-medium" />
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/orbita_bg_pill"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:stateListAnimator="@null"
+            android:tag="theme_ignore"
+            android:text="@string/mgr_back"
+            android:textAllCaps="false"
+            android:textColor="@color/orbita_text"
+            android:textSize="13sp" />
 
-        <TextView
-            android:id="@+id/txtHeaderStats"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/mgr_loading"
-            android:textColor="#888888"
-            android:textSize="11sp"
-            android:layout_marginTop="2dp" />
-
-        <!-- Action toolbar -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <Button
-                android:id="@+id/btnSort"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:backgroundTint="#2196F3"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
-                android:textAllCaps="false"
-                android:minHeight="0dp"
-                android:paddingHorizontal="16dp"
-                android:text="@string/mgr_sort" />
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/txtSortMode"
-                android:layout_width="wrap_content"
-                android:layout_height="34dp"
-                android:layout_marginStart="8dp"
-                android:gravity="center"
-                android:text="@string/mgr_sort_mode_total"
-                android:textColor="#AAAAAA"
-                android:textSize="11sp" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:tag="theme_ignore"
+                android:text="@string/mgr_title"
+                android:textColor="@color/orbita_text"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/txtHeaderStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:tag="theme_ignore"
+                android:text="@string/mgr_loading"
+                android:textColor="@color/orbita_text_muted"
+                android:textSize="12sp" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/txtSortMode"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:tag="theme_ignore"
+            android:text="@string/mgr_sort_mode_total"
+            android:textColor="@color/orbita_text_secondary"
+            android:textSize="12sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSort"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/orbita_bg_pill"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:stateListAnimator="@null"
+            android:tag="theme_ignore"
+            android:text="@string/mgr_sort"
+            android:textAllCaps="false"
+            android:textColor="@color/orbita_text"
+            android:textSize="13sp" />
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#252525" />
-
-    <!-- Shizuku Status Banner -->
+    <!-- Aviso do Shizuku (cor do estado aplicada no codigo) -->
     <LinearLayout
         android:id="@+id/shizukuBanner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/manager_banner_bg"
         android:gravity="center_vertical"
-        android:padding="10dp"
-        android:background="#2A1810"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="10dp"
+        android:tag="theme_ignore"
         android:visibility="gone">
 
         <TextView
@@ -87,43 +118,54 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:paddingEnd="12dp"
+            android:tag="theme_ignore"
             android:text="@string/mgr_shizuku_not_installed"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:paddingEnd="8dp" />
+            android:textColor="@color/orbita_text"
+            android:textSize="13sp" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnShizukuAction"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:backgroundTint="#FF9800"
-            android:text="@string/mgr_install"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            android:textAllCaps="false"
+            android:layout_height="36dp"
+            android:background="@drawable/orbita_bg_pill_accent"
+            android:minWidth="0dp"
             android:minHeight="0dp"
-            android:paddingHorizontal="14dp" />
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:stateListAnimator="@null"
+            android:tag="theme_ignore"
+            android:text="@string/mgr_install"
+            android:textAllCaps="false"
+            android:textColor="@color/orbita_text"
+            android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- Loading indicator -->
+    <!-- Carregando -->
     <ProgressBar
         android:id="@+id/progressLoading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
+        android:indeterminateTint="@color/orbita_accent"
+        android:tag="theme_ignore"
         android:visibility="gone" />
 
-    <!-- Apps Grid (2 columns for richer cards) -->
+    <!-- Lista de apps (grade de cartoes) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/appsList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="6dp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
+        android:paddingBottom="16dp"
+        android:scrollbars="none"
+        android:tag="theme_ignore" />
 
-    <!-- Empty State -->
+    <!-- Lista vazia -->
     <LinearLayout
         android:id="@+id/emptyState"
         android:layout_width="match_parent"
@@ -136,40 +178,18 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:tag="theme_ignore"
             android:text="@string/mgr_empty_title"
-            android:textColor="#888888"
-            android:textSize="14sp" />
+            android:textColor="@color/orbita_text_secondary"
+            android:textSize="16sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:tag="theme_ignore"
             android:text="@string/mgr_empty_hint"
-            android:textColor="#555555"
-            android:textSize="11sp" />
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#252525" />
-
-    <!-- Footer with Close button -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#1A1A1A"
-        android:padding="8dp">
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnBack"
-            android:layout_width="match_parent"
-            android:layout_height="38dp"
-            android:text="@string/mgr_close"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#333333"
-            android:textAllCaps="false"
+            android:textColor="@color/orbita_text_muted"
             android:textSize="12sp" />
     </LinearLayout>
 

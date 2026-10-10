@@ -1,38 +1,35 @@
 package com.neto.orbitalauncher;
 
+import android.app.AppOpsManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Process;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.tabs.TabLayout;
+import com.bumptech.glide.request.RequestOptions;
 
-import com.neto.orbitalauncher.theme.Theme;
-import com.neto.orbitalauncher.theme.ThemeApplier;
-import com.neto.orbitalauncher.theme.ThemeManager;
 import com.neto.orbitalauncher.theme.ThemedDialog;
 
 import java.text.SimpleDateFormat;
@@ -41,549 +38,532 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Tempo de jogo: barra lateral com os periodos (Hoje / Semana / Mes / Total / Voltar) e duas vistas:
+ * "Lista" (resumo + lista de apps) e "Destaque" (mais jogado em cartao grande + resumo + demais apps).
+ */
 public class PlaytimeStatsActivity extends AppCompatActivity {
 
-    private PlaytimeTracker playtimeTracker;
-    private RecyclerView playtimeList;
-    private PlaytimeAdapter adapter;
-    private TabLayout tabTimeRange;
-    private TextView txtTotalPlaytime;
-    private TextView txtMostPlayed;
-    private TextView txtGameCount;
-    private TextView txtLastUpdated;
-    private TextView txtCurrentlyPlaying;
-    private TextView txtCurrentPlaytime;
-    private MaterialCardView currentlyPlayingCard;
-    private MaterialCardView permissionCard;
-    private LinearLayout summaryStatsContainer;
-    private LinearLayout listHeadersContainer;
-    private ImageView btnResetStats;
-    private ImageView btnRefresh;
-    private ImageView btnViewToggle;
-    private View btnBack;
-    private View btnGrantPermission;
-
-    private PlaytimeTracker.TimeRange currentRange = PlaytimeTracker.TimeRange.TODAY;
-    private List<PlaytimeTracker.PlaytimeEntry> entries = new ArrayList<>();
-    private Handler updateHandler = new Handler();
-    private Runnable updateRunnable;
-
-    private boolean isCardView = true; // Default to card view
-
-    // Permanent permission storage
-    private SharedPreferences prefs;
     private static final String PREFS_NAME = "VRLPrefs";
+    // Lido tambem pela MainActivity: mantido em sincronia com a permissao real
     private static final String KEY_PERMISSION_GRANTED = "usage_stats_permission_granted";
-    private static final String KEY_PERMISSION_NEVER_ASK = "usage_stats_never_ask";
-
-    // Cache the permission state permanently after first successful check
-    private boolean permissionState = false;
-    private boolean permissionChecked = false;
+    private static final String KEY_VIEW_MODE = "playtime_view_mode";
+    private static final String VIEW_LIST = "list";
+    private static final String VIEW_HIGHLIGHT = "highlight";
 
     // GitHub cover images URL
     private static final String GITHUB_ICON_BASE_URL =
             "https://raw.githubusercontent.com/JarJarBlinkz/LauncherIcons/main/oculus_landscape/";
 
+    private static final int GRID_COLUMNS = 3;
+
+    private PlaytimeTracker playtimeTracker;
+    private SharedPreferences prefs;
+
+    // Barra lateral
+    private TextView rangeToday, rangeWeek, rangeMonth, rangeAllTime;
+
+    // Cabecalho
+    private TextView txtLastUpdated;
+    private ImageView btnRefresh, btnResetStats, btnViewToggle;
+
+    // Permissao
+    private View permissionCard;
+
+    // Vista Lista
+    private View viewList;
+    private TextView txtTotalPlaytime, txtMostPlayed, txtGameCount;
+    private View currentlyPlayingCard;
+    private TextView txtCurrentlyPlaying, txtCurrentPlaytime;
+    private RecyclerView playtimeList;
+
+    // Vista Destaque
+    private View viewHighlight;
+    private View hlHeroCard;
+    private ImageView hlHeroThumb;
+    private TextView hlHeroName, hlHeroTime, hlTotal, hlGames, hlNowName, hlNowTime, hlOthersLabel;
+    private View hlNowCard;
+    private RecyclerView playtimeGrid;
+
+    private TextView txtEmpty;
+
+    private PlaytimeAdapter listAdapter;
+    private PlaytimeAdapter gridAdapter;
+
+    private PlaytimeTracker.TimeRange currentRange = PlaytimeTracker.TimeRange.TODAY;
+    private List<PlaytimeTracker.PlaytimeEntry> entries = new ArrayList<>();
+    private final List<PlaytimeTracker.PlaytimeEntry> otherEntries = new ArrayList<>();
+    private PlaytimeTracker.PlaytimeEntry heroEntry;
+    private long totalEntriesMs = 0;
+
+    private final Handler updateHandler = new Handler(Looper.getMainLooper());
+    private Runnable updateRunnable;
+
+    private boolean highlightView = false;
+    private boolean hasAccess = false;
+    private boolean dataLoaded = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Make window background transparent for true see-through effect
-        getWindow().setBackgroundDrawableResource(R.color.orbita_screen);
-
+        getWindow().setBackgroundDrawableResource(R.color.orbita_panel);
         setContentView(R.layout.activity_playtime_stats);
 
         playtimeTracker = new PlaytimeTracker(this);
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        highlightView = VIEW_HIGHLIGHT.equals(prefs.getString(KEY_VIEW_MODE, VIEW_LIST));
 
-        // Initialize views
-        playtimeList = findViewById(R.id.playtimeList);
-        tabTimeRange = findViewById(R.id.tabTimeRange);
+        bindViews();
+
+        // Periodos
+        rangeToday.setOnClickListener(v -> selectRange(PlaytimeTracker.TimeRange.TODAY));
+        rangeWeek.setOnClickListener(v -> selectRange(PlaytimeTracker.TimeRange.WEEK));
+        rangeMonth.setOnClickListener(v -> selectRange(PlaytimeTracker.TimeRange.MONTH));
+        rangeAllTime.setOnClickListener(v -> selectRange(PlaytimeTracker.TimeRange.ALL_TIME));
+        findViewById(R.id.navBack).setOnClickListener(v -> finish());
+        updateRangeSelection();
+
+        // Listas
+        listAdapter = new PlaytimeAdapter(R.layout.item_playtime_stat, false);
+        playtimeList.setLayoutManager(new LinearLayoutManager(this));
+        playtimeList.setAdapter(listAdapter);
+
+        gridAdapter = new PlaytimeAdapter(R.layout.item_playtime_card, true);
+        playtimeGrid.setLayoutManager(new GridLayoutManager(this, GRID_COLUMNS));
+        playtimeGrid.setAdapter(gridAdapter);
+
+        // Cabecalho
+        btnRefresh.setOnClickListener(v -> refreshData());
+        btnViewToggle.setOnClickListener(v -> {
+            highlightView = !highlightView;
+            prefs.edit().putString(KEY_VIEW_MODE, highlightView ? VIEW_HIGHLIGHT : VIEW_LIST).apply();
+            updateContentVisibility();
+        });
+        btnResetStats.setOnClickListener(v -> confirmReset());
+
+        hlHeroCard.setOnClickListener(v -> {
+            if (heroEntry != null) showAppDetails(heroEntry);
+        });
+
+        findViewById(R.id.btnGrantPermission).setOnClickListener(v -> openUsageAccessSettings());
+
+        // O estado da permissao e os dados sao carregados em onResume (que roda logo apos onCreate).
+    }
+
+    private void bindViews() {
+        rangeToday = findViewById(R.id.rangeToday);
+        rangeWeek = findViewById(R.id.rangeWeek);
+        rangeMonth = findViewById(R.id.rangeMonth);
+        rangeAllTime = findViewById(R.id.rangeAllTime);
+
+        txtLastUpdated = findViewById(R.id.txtLastUpdated);
+        btnRefresh = findViewById(R.id.btnRefresh);
+        btnResetStats = findViewById(R.id.btnResetStats);
+        btnViewToggle = findViewById(R.id.btnViewToggle);
+
+        permissionCard = findViewById(R.id.permissionCard);
+
+        viewList = findViewById(R.id.viewList);
         txtTotalPlaytime = findViewById(R.id.txtTotalPlaytime);
         txtMostPlayed = findViewById(R.id.txtMostPlayed);
         txtGameCount = findViewById(R.id.txtGameCount);
-        txtLastUpdated = findViewById(R.id.txtLastUpdated);
+        currentlyPlayingCard = findViewById(R.id.currentlyPlayingCard);
         txtCurrentlyPlaying = findViewById(R.id.txtCurrentlyPlaying);
         txtCurrentPlaytime = findViewById(R.id.txtCurrentPlaytime);
-        currentlyPlayingCard = findViewById(R.id.currentlyPlayingCard);
-        permissionCard = findViewById(R.id.permissionCard);
-        summaryStatsContainer = findViewById(R.id.summaryStatsContainer);
-        listHeadersContainer = findViewById(R.id.listHeadersContainer);
-        btnResetStats = findViewById(R.id.btnResetStats);
-        btnRefresh = findViewById(R.id.btnRefresh);
-        btnViewToggle = findViewById(R.id.btnViewToggle);
-        btnBack = findViewById(R.id.btnBack);
-        btnGrantPermission = findViewById(R.id.btnGrantPermission);
+        playtimeList = findViewById(R.id.playtimeList);
 
-        // Setup RecyclerView with Grid Layout - 6 columns
-        playtimeList.setLayoutManager(new androidx.recyclerview.widget.GridLayoutManager(this, 6));
-        adapter = new PlaytimeAdapter();
-        playtimeList.setAdapter(adapter);
+        viewHighlight = findViewById(R.id.viewHighlight);
+        hlHeroCard = findViewById(R.id.hlHeroCard);
+        hlHeroThumb = findViewById(R.id.hlHeroThumb);
+        hlHeroName = findViewById(R.id.hlHeroName);
+        hlHeroTime = findViewById(R.id.hlHeroTime);
+        hlTotal = findViewById(R.id.hlTotal);
+        hlGames = findViewById(R.id.hlGames);
+        hlNowCard = findViewById(R.id.hlNowCard);
+        hlNowName = findViewById(R.id.hlNowName);
+        hlNowTime = findViewById(R.id.hlNowTime);
+        hlOthersLabel = findViewById(R.id.hlOthersLabel);
+        playtimeGrid = findViewById(R.id.playtimeGrid);
 
-        // Check permission once at startup
-        checkPermissionOnce();
+        txtEmpty = findViewById(R.id.txtEmpty);
+    }
 
-        // Setup tab listener
-        tabTimeRange.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
-                    case 0: currentRange = PlaytimeTracker.TimeRange.TODAY; break;
-                    case 1: currentRange = PlaytimeTracker.TimeRange.WEEK; break;
-                    case 2: currentRange = PlaytimeTracker.TimeRange.MONTH; break;
-                    case 3: currentRange = PlaytimeTracker.TimeRange.ALL_TIME; break;
-                }
-                refreshData();
-            }
+    // ------------------------------------------------------------------
+    // Periodos (barra lateral)
+    // ------------------------------------------------------------------
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
-        });
-
-        // Button listeners
-        btnRefresh.setOnClickListener(v -> refreshData());
-        btnBack.setOnClickListener(v -> finish());
-
-        btnViewToggle.setOnClickListener(v -> {
-            isCardView = !isCardView;
-            switchViewMode();
-        });
-
-        btnResetStats.setOnClickListener(v -> {
-            ThemedDialog.showThemed(new AlertDialog.Builder(PlaytimeStatsActivity.this)
-                    .setTitle(R.string.play_clear_title)
-                    .setMessage(R.string.play_clear_message)
-                    .setPositiveButton(R.string.play_clear_all, (d, w) -> {
-                        // Clear stats in tracker
-                        playtimeTracker.clearAllStats();
-
-                        // Clear the current entries list
-                        entries.clear();
-                        adapter.notifyDataSetChanged();
-
-                        // Reset the summary stats to zero
-                        txtTotalPlaytime.setText(R.string.play_zero_hours);
-                        txtMostPlayed.setText(R.string.play_none);
-                        txtGameCount.setText("0");
-
-                        // Update the timestamp
-                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-                        txtLastUpdated.setText(getString(R.string.play_cleared_at, sdf.format(new Date())));
-
-                        Toast.makeText(PlaytimeStatsActivity.this, getString(R.string.play_all_cleared), Toast.LENGTH_LONG).show();
-                    })
-                    .setNegativeButton(R.string.play_cancel, null)
-                    .create());
-        });
-
-        btnGrantPermission.setOnClickListener(v -> {
-            try {
-                Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                startActivity(intent);
-                // Mark that we've shown the settings, but don't check yet
-                prefs.edit().putBoolean(KEY_PERMISSION_NEVER_ASK, true).apply();
-            } catch (Exception e) {
-                Toast.makeText(PlaytimeStatsActivity.this, getString(R.string.play_grant_manually), Toast.LENGTH_LONG).show();
-                // Show ADB command
-                ThemedDialog.showThemed(new AlertDialog.Builder(PlaytimeStatsActivity.this)
-                        .setTitle(R.string.play_adb_title)
-                        .setMessage(getString(R.string.play_adb_message, "adb shell pm grant " + getPackageName() + " android.permission.PACKAGE_USAGE_STATS"))
-                        .setPositiveButton(R.string.play_ok, null)
-                        .create());
-            }
-        });
-
-        // Start periodic updates
-        startPeriodicUpdates();
-
-        // Set initial UI state based on default view mode (card view)
-        setInitialViewState();
-
-        // Initial data load
+    private void selectRange(PlaytimeTracker.TimeRange range) {
+        if (range == currentRange && dataLoaded) return;
+        currentRange = range;
+        updateRangeSelection();
         refreshData();
-
-        // Apply theme to entire activity
-        View rootView = findViewById(android.R.id.content);
-        ThemeApplier.applyThemeToHierarchy(rootView);
-
-        // Theme the TabLayout
-        themeTabLayout();
     }
 
-    private void themeTabLayout() {
-        if (tabTimeRange == null) return;
-        Theme theme = ThemeManager.getInstance(this).getCurrentTheme();
-        tabTimeRange.setBackgroundColor(theme.bgSecondary);
-        tabTimeRange.setSelectedTabIndicatorColor(theme.accentPrimary);
-        tabTimeRange.setTabTextColors(theme.textMuted, theme.accentPrimary);
+    private void updateRangeSelection() {
+        rangeToday.setSelected(currentRange == PlaytimeTracker.TimeRange.TODAY);
+        rangeWeek.setSelected(currentRange == PlaytimeTracker.TimeRange.WEEK);
+        rangeMonth.setSelected(currentRange == PlaytimeTracker.TimeRange.MONTH);
+        rangeAllTime.setSelected(currentRange == PlaytimeTracker.TimeRange.ALL_TIME);
     }
 
-    private void checkPermissionOnce() {
-        // If we've already checked and determined permission is granted, never check again
-        boolean permanentlyGranted = prefs.getBoolean(KEY_PERMISSION_GRANTED, false);
+    // ------------------------------------------------------------------
+    // Permissao de acesso ao uso
+    // ------------------------------------------------------------------
 
-        if (permanentlyGranted) {
-            permissionState = true;
-            permissionChecked = true;
-            permissionCard.setVisibility(View.GONE);
-            playtimeList.setVisibility(View.VISIBLE);
-            return;
-        }
-
-        // Otherwise, check once
-        boolean hasPerm = playtimeTracker.hasPermission();
-        if (hasPerm) {
-            // Save that permission is permanently granted
-            prefs.edit().putBoolean(KEY_PERMISSION_GRANTED, true).apply();
-            permissionState = true;
-            permissionCard.setVisibility(View.GONE);
-            playtimeList.setVisibility(View.VISIBLE);
-        } else {
-            permissionState = false;
-            permissionCard.setVisibility(View.VISIBLE);
-            playtimeList.setVisibility(View.GONE);
-
-            // If we've never asked before, show the ADB command
-            if (!prefs.getBoolean(KEY_PERMISSION_NEVER_ASK, false)) {
-                showAdbCommandDialog();
-                prefs.edit().putBoolean(KEY_PERMISSION_NEVER_ASK, true).apply();
+    /** Checa a permissao de verdade (AppOps + consulta do tracker) e guarda o resultado para a MainActivity. */
+    private boolean checkUsageAccess() {
+        boolean granted = false;
+        try {
+            AppOpsManager appOps = (AppOpsManager) getSystemService(APP_OPS_SERVICE);
+            if (appOps != null) {
+                int mode;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    mode = appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                            Process.myUid(), getPackageName());
+                } else {
+                    mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                            Process.myUid(), getPackageName());
+                }
+                if (mode == AppOpsManager.MODE_DEFAULT) {
+                    // Concedida via "pm grant" (ADB): o AppOps fica no padrao e vale a permissao
+                    granted = checkCallingOrSelfPermission("android.permission.PACKAGE_USAGE_STATS")
+                            == PackageManager.PERMISSION_GRANTED;
+                } else {
+                    granted = mode == AppOpsManager.MODE_ALLOWED;
+                }
             }
+        } catch (Exception ignored) {
         }
-        permissionChecked = true;
+        if (!granted) granted = playtimeTracker.hasPermission();
+        prefs.edit().putBoolean(KEY_PERMISSION_GRANTED, granted).apply();
+        return granted;
     }
 
-    private void showAdbCommandDialog() {
-        String adbCommand = "adb shell pm grant " + getPackageName() + " android.permission.PACKAGE_USAGE_STATS";
-
-        ThemedDialog.showThemed(new AlertDialog.Builder(PlaytimeStatsActivity.this)
-                .setTitle(R.string.play_perm_dialog_title)
-                .setMessage(getString(R.string.play_perm_dialog_message, adbCommand))
+    private void openUsageAccessSettings() {
+        try {
+            Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+            return;
+        } catch (Exception ignored) {
+        }
+        try {
+            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+            return;
+        } catch (Exception ignored) {
+        }
+        // Sem tela de configuracoes disponivel: mostra o comando ADB
+        Toast.makeText(this, getString(R.string.play_grant_manually), Toast.LENGTH_LONG).show();
+        ThemedDialog.showThemed(new AlertDialog.Builder(this)
+                .setTitle(R.string.play_adb_title)
+                .setMessage(getString(R.string.play_adb_message,
+                        "adb shell pm grant " + getPackageName() + " android.permission.PACKAGE_USAGE_STATS"))
                 .setPositiveButton(R.string.play_ok, null)
                 .create());
     }
 
+    // ------------------------------------------------------------------
+    // Visibilidade das vistas
+    // ------------------------------------------------------------------
+
+    private void updateContentVisibility() {
+        boolean empty = dataLoaded && entries.isEmpty();
+
+        permissionCard.setVisibility(hasAccess ? View.GONE : View.VISIBLE);
+        viewList.setVisibility(hasAccess && !highlightView && !empty ? View.VISIBLE : View.GONE);
+        viewHighlight.setVisibility(hasAccess && highlightView && !empty ? View.VISIBLE : View.GONE);
+        txtEmpty.setVisibility(hasAccess && empty ? View.VISIBLE : View.GONE);
+
+        int actions = hasAccess ? View.VISIBLE : View.GONE;
+        btnRefresh.setVisibility(actions);
+        btnResetStats.setVisibility(actions);
+        btnViewToggle.setVisibility(actions);
+        txtLastUpdated.setVisibility(actions);
+
+        // O botao mostra a vista para a qual ele leva
+        btnViewToggle.setImageResource(highlightView ? R.drawable.playtime_ic_list : R.drawable.ic_view_module);
+        btnViewToggle.setContentDescription(getString(highlightView ? R.string.play_view_list : R.string.play_view_highlight));
+    }
+
+    // ------------------------------------------------------------------
+    // Dados
+    // ------------------------------------------------------------------
+
+    private void refreshData() {
+        if (!hasAccess) return;
+
+        final long clearedAt = playtimeTracker.getStatsClearedAt();
+        final PlaytimeTracker.TimeRange requested = currentRange;
+
+        playtimeTracker.getPlaytimeLeaderboard(50, requested, leaderboard -> runOnUiThread(() -> {
+            if (isFinishing() || requested != currentRange) return;
+            entries = leaderboard != null ? leaderboard : new ArrayList<>();
+            dataLoaded = true;
+            onEntriesChanged();
+            updateLastUpdated();
+
+            if (clearedAt > System.currentTimeMillis() - 60000) {
+                Toast.makeText(PlaytimeStatsActivity.this, getString(R.string.play_stats_cleared_note), Toast.LENGTH_SHORT).show();
+            }
+        }));
+    }
+
+    /** Recalcula resumo, destaque e listas a partir de {@link #entries}. */
+    private void onEntriesChanged() {
+        totalEntriesMs = 0;
+        heroEntry = null;
+        for (PlaytimeTracker.PlaytimeEntry e : entries) {
+            totalEntriesMs += e.playtime;
+            if (heroEntry == null || e.playtime > heroEntry.playtime) heroEntry = e;
+        }
+        otherEntries.clear();
+        for (PlaytimeTracker.PlaytimeEntry e : entries) {
+            if (e != heroEntry) otherEntries.add(e);
+        }
+
+        long totalMs = playtimeTracker.getTotalPlaytime(currentRange);
+        String total = PlaytimeTracker.formatPlaytime(totalMs);
+        String games = String.valueOf(playtimeTracker.getActiveAppsCount(currentRange));
+
+        // Vista Lista
+        txtTotalPlaytime.setText(total);
+        txtMostPlayed.setText(heroEntry != null ? displayName(heroEntry) : getString(R.string.play_none));
+        txtGameCount.setText(games);
+
+        // Vista Destaque
+        hlTotal.setText(total);
+        hlGames.setText(games);
+        if (heroEntry != null) {
+            hlHeroName.setText(displayName(heroEntry));
+            hlHeroTime.setText(heroEntry.getFormattedPlaytime());
+            loadThumb(hlHeroThumb, heroEntry.getPackageName(), 800, 450);
+        } else {
+            hlHeroName.setText(R.string.play_none);
+            hlHeroTime.setText(R.string.play_zero_hours);
+            hlHeroThumb.setImageDrawable(null);
+        }
+        hlOthersLabel.setVisibility(otherEntries.isEmpty() ? View.GONE : View.VISIBLE);
+
+        listAdapter.notifyDataSetChanged();
+        gridAdapter.notifyDataSetChanged();
+        updateContentVisibility();
+    }
+
+    private void updateLastUpdated() {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        String text = getString(R.string.play_last_updated, sdf.format(new Date()));
+        if (currentRange == PlaytimeTracker.TimeRange.ALL_TIME) {
+            text += "  ·  " + getString(R.string.play_all_time_note);
+        }
+        txtLastUpdated.setText(text);
+    }
+
+    private void confirmReset() {
+        ThemedDialog.showThemed(new AlertDialog.Builder(PlaytimeStatsActivity.this)
+                .setTitle(R.string.play_clear_title)
+                .setMessage(R.string.play_clear_message)
+                .setPositiveButton(R.string.play_clear_all, (d, w) -> {
+                    playtimeTracker.clearAllStats();
+                    entries = new ArrayList<>();
+                    onEntriesChanged();
+
+                    txtTotalPlaytime.setText(R.string.play_zero_hours);
+                    hlTotal.setText(R.string.play_zero_hours);
+                    txtGameCount.setText("0");
+                    hlGames.setText("0");
+
+                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+                    txtLastUpdated.setText(getString(R.string.play_cleared_at, sdf.format(new Date())));
+
+                    Toast.makeText(PlaytimeStatsActivity.this, getString(R.string.play_all_cleared), Toast.LENGTH_LONG).show();
+                })
+                .setNegativeButton(R.string.play_cancel, null)
+                .create());
+    }
+
+    // ------------------------------------------------------------------
+    // Jogando agora
+    // ------------------------------------------------------------------
+
     private void startPeriodicUpdates() {
+        stopPeriodicUpdates();
         updateRunnable = new Runnable() {
             @Override
             public void run() {
                 updateCurrentlyPlaying();
-                updateHandler.postDelayed(this, 5000); // Update every 5 seconds
+                updateHandler.postDelayed(this, 5000);
             }
         };
         updateHandler.post(updateRunnable);
     }
 
+    private void stopPeriodicUpdates() {
+        if (updateRunnable != null) updateHandler.removeCallbacks(updateRunnable);
+    }
+
     private void updateCurrentlyPlaying() {
-        // Only update if we have permission (using cached state)
-        if (!prefs.getBoolean(KEY_PERMISSION_GRANTED, false)) {
+        String label = null;
+        String time = null;
+        if (hasAccess) {
+            String currentPackage = playtimeTracker.getCurrentRunningApp();
+            if (currentPackage != null) {
+                PlaytimeTracker.AppInfo info = playtimeTracker.getAppInfo(currentPackage);
+                if (info != null) {
+                    label = info.label;
+                    Long today = playtimeTracker.getTodayPlaytime().get(currentPackage);
+                    time = PlaytimeTracker.formatPlaytime(today != null ? today : 0L);
+                }
+            }
+        }
+        if (label == null) {
             currentlyPlayingCard.setVisibility(View.GONE);
+            hlNowCard.setVisibility(View.GONE);
             return;
         }
-
-        String currentPackage = playtimeTracker.getCurrentRunningApp();
-        if (currentPackage != null) {
-            PlaytimeTracker.AppInfo info = playtimeTracker.getAppInfo(currentPackage);
-            if (info != null) {
-                currentlyPlayingCard.setVisibility(View.VISIBLE);
-                txtCurrentlyPlaying.setText(getString(R.string.play_currently_playing, info.label));
-
-                // Get today's playtime for this app
-                long todayPlaytime = playtimeTracker.getTodayPlaytime().getOrDefault(currentPackage, 0L);
-                txtCurrentPlaytime.setText(PlaytimeTracker.formatPlaytime(todayPlaytime));
-            } else {
-                currentlyPlayingCard.setVisibility(View.GONE);
-            }
-        } else {
-            currentlyPlayingCard.setVisibility(View.GONE);
-        }
+        txtCurrentlyPlaying.setText(label);
+        txtCurrentPlaytime.setText(time);
+        hlNowName.setText(label);
+        hlNowTime.setText(time);
+        currentlyPlayingCard.setVisibility(View.VISIBLE);
+        hlNowCard.setVisibility(View.VISIBLE);
     }
 
-    private void refreshData() {
-        // Use the permanently stored permission state - don't recheck
-        if (!prefs.getBoolean(KEY_PERMISSION_GRANTED, false)) {
-            return;
-        }
-
-        // Get cleared timestamp
-        long clearedAt = playtimeTracker.getStatsClearedAt();
-
-        // Get leaderboard data
-        playtimeTracker.getPlaytimeLeaderboard(50, currentRange, new PlaytimeTracker.LeaderboardCallback() {
-            @Override
-            public void onLeaderboardReady(List<PlaytimeTracker.PlaytimeEntry> leaderboard) {
-                entries = leaderboard;
-                runOnUiThread(() -> {
-                    adapter.notifyDataSetChanged();
-                    updateSummaryStats();
-                    updateLastUpdated();
-
-                    // If stats were recently cleared, show a note
-                    if (clearedAt > System.currentTimeMillis() - 60000) { // Last minute
-                        Toast.makeText(PlaytimeStatsActivity.this, getString(R.string.play_stats_cleared_note), Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        });
-    }
-
-    private void updateSummaryStats() {
-        // Total playtime
-        long totalMs = playtimeTracker.getTotalPlaytime(currentRange);
-        String mostPlayedApp = getString(R.string.play_none);
-        long mostPlayedTime = 0;
-
-        for (PlaytimeTracker.PlaytimeEntry entry : entries) {
-            if (entry.playtime > mostPlayedTime) {
-                mostPlayedTime = entry.playtime;
-                mostPlayedApp = entry.getAppName();
-            }
-        }
-
-        txtTotalPlaytime.setText(PlaytimeTracker.formatPlaytime(totalMs));
-        txtMostPlayed.setText(mostPlayedApp.length() > 15 ?
-                mostPlayedApp.substring(0, 12) + "..." : mostPlayedApp);
-
-        // Use getActiveAppsCount here if you want
-        int activeCount = playtimeTracker.getActiveAppsCount(currentRange);
-        txtGameCount.setText(String.valueOf(activeCount)); // or entries.size()
-    }
-
-    private void updateLastUpdated() {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-        txtLastUpdated.setText(getString(R.string.play_last_updated, sdf.format(new Date())));
-    }
+    // ------------------------------------------------------------------
+    // Ciclo de vida
+    // ------------------------------------------------------------------
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Don't recheck permission - use stored state
-        // But if we haven't checked yet (first launch), check once
-        if (!permissionChecked) {
-            checkPermissionOnce();
+        // Re-checa sempre: o usuario pode ter acabado de voltar das configuracoes
+        boolean wasGranted = hasAccess;
+        hasAccess = checkUsageAccess();
+        updateContentVisibility();
+        if (hasAccess) {
+            if (!wasGranted) dataLoaded = false;
+            refreshData();
+            startPeriodicUpdates();
+        } else {
+            stopPeriodicUpdates();
+            currentlyPlayingCard.setVisibility(View.GONE);
+            hlNowCard.setVisibility(View.GONE);
         }
-        refreshData();
-        startPeriodicUpdates();
-
-        // Re-apply theme on resume
-        View rootView = findViewById(android.R.id.content);
-        if (rootView != null) {
-            ThemeApplier.applyThemeToHierarchy(rootView);
-        }
-        themeTabLayout();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (updateRunnable != null) {
-            updateHandler.removeCallbacks(updateRunnable);
-        }
+        stopPeriodicUpdates();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (updateRunnable != null) {
-            updateHandler.removeCallbacks(updateRunnable);
-        }
+        stopPeriodicUpdates();
     }
+
+    // ------------------------------------------------------------------
+    // Miniaturas
+    // ------------------------------------------------------------------
 
     private String getGitHubIconUrl(String packageName) {
         return GITHUB_ICON_BASE_URL + packageName + ".jpg";
     }
 
-    private void setInitialViewState() {
-        // Set initial visibility based on default isCardView = true
-        if (isCardView) {
-            summaryStatsContainer.setVisibility(View.GONE);
-            currentlyPlayingCard.setVisibility(View.GONE);
-            listHeadersContainer.setVisibility(View.GONE);
-        } else {
-            summaryStatsContainer.setVisibility(View.VISIBLE);
-            currentlyPlayingCard.setVisibility(View.VISIBLE);
-            listHeadersContainer.setVisibility(View.VISIBLE);
+    private void loadThumb(ImageView target, String packageName, int width, int height) {
+        Drawable appIcon;
+        try {
+            appIcon = getPackageManager().getApplicationIcon(packageName);
+        } catch (PackageManager.NameNotFoundException e) {
+            appIcon = getDrawable(android.R.drawable.sym_def_app_icon);
         }
+        Glide.with(this)
+                .load(getGitHubIconUrl(packageName))
+                .apply(new RequestOptions()
+                        .placeholder(appIcon)
+                        .error(appIcon)
+                        .centerCrop()
+                        .override(width, height)
+                        .skipMemoryCache(false)
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                        .dontAnimate())
+                .into(target);
     }
 
-    private void switchViewMode() {
-        if (isCardView) {
-            // Card view - hide summary stats, currently playing, and list headers
-            summaryStatsContainer.setVisibility(View.GONE);
-            currentlyPlayingCard.setVisibility(View.GONE);
-            listHeadersContainer.setVisibility(View.GONE);
-            playtimeList.setLayoutManager(new androidx.recyclerview.widget.GridLayoutManager(this, 6));
-        } else {
-            // List view - show all stats
-            summaryStatsContainer.setVisibility(View.VISIBLE);
-            currentlyPlayingCard.setVisibility(View.VISIBLE);
-            listHeadersContainer.setVisibility(View.VISIBLE);
-            playtimeList.setLayoutManager(new LinearLayoutManager(this));
-        }
-
-        // Recreate adapter with new layout
-        adapter = new PlaytimeAdapter();
-        playtimeList.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
-
-        refreshData();
+    private String displayName(PlaytimeTracker.PlaytimeEntry entry) {
+        String name = entry.getAppName();
+        return name == null || name.isEmpty() ? entry.getPackageName() : name;
     }
 
-    // Adapter class for RecyclerView
+    // ------------------------------------------------------------------
+    // Adapter (lista e grade de "demais apps")
+    // ------------------------------------------------------------------
+
     private class PlaytimeAdapter extends RecyclerView.Adapter<PlaytimeAdapter.ViewHolder> {
+        private final int layoutId;
+        private final boolean othersOnly;
+
+        PlaytimeAdapter(int layoutId, boolean othersOnly) {
+            this.layoutId = layoutId;
+            this.othersOnly = othersOnly;
+        }
+
+        private List<PlaytimeTracker.PlaytimeEntry> data() {
+            return othersOnly ? otherEntries : entries;
+        }
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            int layoutId = isCardView ? R.layout.item_playtime_card : R.layout.item_playtime_stat;
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(layoutId, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
             return new ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            PlaytimeTracker.PlaytimeEntry entry = entries.get(position);
+            final PlaytimeTracker.PlaytimeEntry entry = data().get(position);
 
-            // Apply theme to this card
-            Theme theme = ThemeManager.getInstance(PlaytimeStatsActivity.this).getCurrentTheme();
-            if (holder.cardView != null) {
-                holder.cardView.setCardBackgroundColor(theme.bgSecondary);
-                holder.cardView.setStrokeColor(theme.borderPrimary);
-            }
-            if (holder.txtAppName != null) holder.txtAppName.setTextColor(theme.textPrimary);
-            if (holder.txtPlaytime != null) holder.txtPlaytime.setTextColor(theme.accentPrimary);
-            if (holder.txtPercentage != null) holder.txtPercentage.setTextColor(theme.textSecondary);
-            if (holder.txtBuildVersion != null) holder.txtBuildVersion.setTextColor(theme.textMuted);
-            if (holder.txtType != null) holder.txtType.setTextColor(theme.textMuted);
-            if (holder.txtInstallDate != null) holder.txtInstallDate.setTextColor(theme.textMuted);
-            if (holder.txtUpdateDate != null) holder.txtUpdateDate.setTextColor(theme.textMuted);
-
-            // App name
-            String appName = entry.getAppName();
-            if (appName.isEmpty()) {
-                appName = entry.getPackageName();
-            }
-            holder.txtAppName.setText(appName);
-
-            // Load game cover from GitHub
-            String githubIconUrl = getGitHubIconUrl(entry.getPackageName());
-
-            Drawable appIcon = null;
-            try {
-                appIcon = getPackageManager().getApplicationIcon(entry.getPackageName());
-            } catch (PackageManager.NameNotFoundException e) {
-                appIcon = getDrawable(android.R.drawable.sym_def_app_icon);
-            }
-
-            Glide.with(PlaytimeStatsActivity.this)
-                    .load(githubIconUrl)
-                    .apply(new RequestOptions()
-                            .placeholder(appIcon)
-                            .error(appIcon)
-                            .centerCrop()
-                            .override(400, 225)
-                            .skipMemoryCache(false)
-                            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                            .dontAnimate())
-                    .into(holder.imgGameCover);
-
-            // Playtime
+            holder.txtAppName.setText(displayName(entry));
             holder.txtPlaytime.setText(entry.getFormattedPlaytime());
+            loadThumb(holder.imgGameCover, entry.getPackageName(), 400, 225);
 
-            // Percentage (relative to total)
-            long totalMs = 0;
-            for (PlaytimeTracker.PlaytimeEntry e : entries) {
-                totalMs += e.playtime;
+            if (holder.txtRank != null) {
+                holder.txtRank.setText(String.valueOf(position + 1));
             }
-            int percent = totalMs > 0 ? (int) ((entry.playtime * 100) / totalMs) : 0;
-            int rank = position + 1; // Position starts at 0, rank starts at 1
-            holder.txtPercentage.setText(PlaytimeStatsActivity.this.getString(R.string.play_rank_format, rank, percent));
-
-            if (entry.appInfo != null) {
-                // Build+Version in format: v{build}+{version}
-                StringBuilder buildVersionText = new StringBuilder("v");
-
-                // Add build number first
-                if (entry.appInfo.versionCode > 0) {
-                    buildVersionText.append(entry.appInfo.versionCode);
-                } else {
-                    buildVersionText.append("?");
-                }
-
-                // Add + then version
-                if (entry.appInfo.versionName != null && !entry.appInfo.versionName.equals("N/A")) {
-                    buildVersionText.append("+").append(entry.appInfo.versionName);
-                } else {
-                    buildVersionText.append("+?");
-                }
-
-                holder.txtBuildVersion.setText(buildVersionText.toString());
-
-                // App type
-                holder.txtType.setText(typeLabel(entry.appInfo));
-                holder.txtType.setTextColor(entry.appInfo.getTypeColor());
-
-                // Install date
-                if (entry.appInfo.firstInstallDate != null && !entry.appInfo.firstInstallDate.equals("N/A")) {
-                    holder.txtInstallDate.setText(entry.appInfo.firstInstallDate);
-                } else {
-                    holder.txtInstallDate.setText(R.string.play_unknown);
-                }
-
-// Update date
-                if (entry.appInfo.lastUpdateDate != null && !entry.appInfo.lastUpdateDate.equals("N/A")) {
-                    holder.txtUpdateDate.setText(entry.appInfo.lastUpdateDate);
-                } else {
-                    holder.txtUpdateDate.setText(R.string.play_unknown);
-                }
-            } else {
-                holder.txtBuildVersion.setText("v?+?");
-                holder.txtType.setText(R.string.play_unknown);
-                holder.txtType.setTextColor(Color.GRAY);
-                holder.txtInstallDate.setText(R.string.play_unknown);
-                holder.txtUpdateDate.setText(R.string.play_unknown);
+            if (holder.txtPercentage != null) {
+                int percent = totalEntriesMs > 0 ? (int) ((entry.playtime * 100) / totalEntriesMs) : 0;
+                holder.txtPercentage.setText(getString(R.string.play_share_format, percent));
             }
 
-            // Click listener for details - FIXED: use PlaytimeStatsActivity.this
-            final PlaytimeTracker.PlaytimeEntry currentEntry = entry;
-            holder.itemView.setOnClickListener(v -> {
-                showAppDetails(currentEntry);
-            });
+            holder.itemView.setOnClickListener(v -> showAppDetails(entry));
         }
 
         @Override
         public int getItemCount() {
-            return entries.size();
+            return data().size();
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            ImageView imgGameCover;
-            TextView txtAppName;
-            TextView txtPlaytime;
-            TextView txtPercentage;
-            TextView txtBuildVersion;  // Will show format like "v463+2.8.0"
-            TextView txtType;
-            TextView txtInstallDate;
-            TextView txtUpdateDate;
-            MaterialCardView cardView;
+            final ImageView imgGameCover;
+            final TextView txtAppName;
+            final TextView txtPlaytime;
+            final TextView txtPercentage;
+            final TextView txtRank;
 
             ViewHolder(View itemView) {
                 super(itemView);
-                cardView = (MaterialCardView) itemView;
                 imgGameCover = itemView.findViewById(R.id.imgGameCover);
                 txtAppName = itemView.findViewById(R.id.txtAppName);
                 txtPlaytime = itemView.findViewById(R.id.txtPlaytime);
                 txtPercentage = itemView.findViewById(R.id.txtPercentage);
-                txtBuildVersion = itemView.findViewById(R.id.txtBuildVersion);
-                txtType = itemView.findViewById(R.id.txtType);
-                txtInstallDate = itemView.findViewById(R.id.txtInstallDate);
-                txtUpdateDate = itemView.findViewById(R.id.txtUpdateDate);
+                txtRank = itemView.findViewById(R.id.txtRank);
             }
         }
     }
+
+    // ------------------------------------------------------------------
+    // Detalhes do app
+    // ------------------------------------------------------------------
 
     private String typeLabel(PlaytimeTracker.AppInfo info) {
         if (info.systemApp) return getString(R.string.play_type_system);
@@ -602,14 +582,11 @@ public class PlaytimeStatsActivity extends AppCompatActivity {
         }
     }
 
-    // Moved this method outside the adapter class
     private void showAppDetails(PlaytimeTracker.PlaytimeEntry entry) {
         if (entry == null || entry.appInfo == null) return;
 
         PlaytimeTracker.AppInfo info = entry.appInfo;
-
         String buildVersion = "v" + info.versionCode + "+" + info.versionName;
-
         String installSource = info.storeApp
                 ? getString(R.string.play_source_store)
                 : (info.sideloaded ? getString(R.string.play_source_sideloaded) : getString(R.string.play_source_system));
@@ -617,7 +594,7 @@ public class PlaytimeStatsActivity extends AppCompatActivity {
         String details = getString(R.string.play_details_format,
                 info.label,
                 info.packageName,
-                buildVersion,  // Shows as "v463+2.8.0"
+                buildVersion,
                 typeLabel(info),
                 info.firstInstallDate,
                 info.lastUpdateDate,

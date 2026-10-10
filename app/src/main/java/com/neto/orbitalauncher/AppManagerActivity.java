@@ -30,9 +30,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.neto.orbitalauncher.theme.Theme;
 import com.neto.orbitalauncher.theme.ThemeApplier;
-import com.neto.orbitalauncher.theme.ThemeManager;
 import com.neto.orbitalauncher.theme.ThemedDialog;
 
 import java.text.Collator;
@@ -321,7 +319,8 @@ public class AppManagerActivity extends AppCompatActivity implements ShizukuMana
     /**
      * Update the Shizuku status banner based on current state
      */
-    private void updateShizukuBanner() {        if (shizukuBanner == null) return;
+    private void updateShizukuBanner() {
+        if (shizukuBanner == null) return;
 
         ShizukuInstaller installer = new ShizukuInstaller(this);
         ShizukuInstaller.InstallStatus status = installer.getStatus();
@@ -329,7 +328,8 @@ public class AppManagerActivity extends AppCompatActivity implements ShizukuMana
         if (status == ShizukuInstaller.InstallStatus.NOT_INSTALLED) {
             // Not installed - Red, install (bundled APK or download from GitHub)
             shizukuBanner.setVisibility(View.VISIBLE);
-            shizukuBanner.setBackgroundColor(android.graphics.Color.parseColor("#3D1A1A"));
+            shizukuBanner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    android.graphics.Color.parseColor("#3D1A1A")));
             txtShizukuStatus.setText(getString(R.string.mgr_banner_not_installed));
             btnShizukuAction.setText(R.string.mgr_install);
             btnShizukuAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
@@ -338,7 +338,8 @@ public class AppManagerActivity extends AppCompatActivity implements ShizukuMana
         } else if (status == ShizukuInstaller.InstallStatus.INSTALLED_NOT_RUNNING) {
             // Installed but not running - Orange, open Shizuku app
             shizukuBanner.setVisibility(View.VISIBLE);
-            shizukuBanner.setBackgroundColor(android.graphics.Color.parseColor("#3D2D1A"));
+            shizukuBanner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    android.graphics.Color.parseColor("#3D2D1A")));
             txtShizukuStatus.setText(getString(R.string.mgr_banner_not_running));
             btnShizukuAction.setText(R.string.mgr_open);
             btnShizukuAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
@@ -352,7 +353,8 @@ public class AppManagerActivity extends AppCompatActivity implements ShizukuMana
                 shizukuManager != null && !shizukuManager.isReady()) {
             // Running but no permission - Yellow, open Shizuku to grant
             shizukuBanner.setVisibility(View.VISIBLE);
-            shizukuBanner.setBackgroundColor(android.graphics.Color.parseColor("#3D3D1A"));
+            shizukuBanner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    android.graphics.Color.parseColor("#3D3D1A")));
             txtShizukuStatus.setText(getString(R.string.mgr_banner_authorize));
             btnShizukuAction.setText(R.string.mgr_open);
             btnShizukuAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
@@ -655,16 +657,7 @@ public class AppManagerActivity extends AppCompatActivity implements ShizukuMana
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             ManagedApp app = apps.get(position);
 
-            // Apply theme
-            Theme theme = ThemeManager.getInstance(AppManagerActivity.this).getCurrentTheme();
-            if (holder.cardView != null) {
-                holder.cardView.setCardBackgroundColor(theme.bgSecondary);
-            }
-            holder.label.setTextColor(theme.textPrimary);
-            holder.packageName.setTextColor(theme.textMuted);
-            holder.version.setTextColor(theme.accentPrimary);
-            holder.totalLabel.setTextColor(theme.textPrimary);
-            holder.totalValue.setTextColor(theme.accentPrimary);
+            // Cores fixas da identidade Orbita (definidas em item_managed_app.xml)
 
             // Icon
             if (app.icon != null) {

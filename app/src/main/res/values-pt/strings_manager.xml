@@ -83,7 +83,7 @@
     <string name="dev_lbl_voltage">Tensão:</string>
     <string name="dev_lbl_tech">Tecnologia:</string>
     <string name="dev_lbl_app">App:</string>
-    <string name="dev_back">← Voltar às Configurações</string>
+    <string name="dev_back">← Voltar</string>
     <string name="dev_storage_error">Não foi possível ler as informações de armazenamento</string>
     <string name="dev_unknown">Desconhecido</string>
     <string name="dev_resolution_fmt">%1$d x %2$d px</string>
@@ -135,4 +135,7 @@
     <string name="upd_apk_not_found">Arquivo APK não encontrado</string>
     <string name="upd_installing">Instalando atualização...</string>
     <string name="upd_error_installing">Erro ao instalar a atualização: %1$s</string>
+    <string name="mgr_back">← Voltar</string>
+    <string name="devinfo_sec_app">App</string>
+    <string name="devinfo_lbl_version">Versão:</string>
 </resources>

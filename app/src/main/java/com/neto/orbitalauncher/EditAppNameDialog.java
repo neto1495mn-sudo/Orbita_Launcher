@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 /**
  * Dialog for editing custom app names
@@ -42,7 +43,7 @@ public class EditAppNameDialog {
         // Show original name as hint
         TextView hintText = new TextView(context);
         hintText.setText(context.getString(R.string.main_edit_original, defaultName));
-        hintText.setTextColor(0xFFAAAAAA);
+        hintText.setTextColor(ContextCompat.getColor(context, R.color.orbita_text_secondary));
         hintText.setTextSize(12);
         hintText.setPadding(0, 0, 0, 16);
         container.addView(hintText);
@@ -53,6 +54,11 @@ public class EditAppNameDialog {
         input.setText(currentName);
         input.setSelection(currentName.length()); // Cursor at end
         input.setHint(context.getString(R.string.main_edit_hint));
+        // Cores do painel Orbita (texto branco, dica cinza, linha azul)
+        input.setTextColor(ContextCompat.getColor(context, R.color.orbita_text));
+        input.setHintTextColor(ContextCompat.getColor(context, R.color.orbita_text_muted));
+        input.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(context, R.color.orbita_accent)));
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,

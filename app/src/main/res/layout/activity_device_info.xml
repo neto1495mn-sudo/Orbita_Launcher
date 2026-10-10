@@ -1,465 +1,652 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Informacoes do dispositivo: painel cinza, cabecalho com Voltar e cartoes arredondados (mesma identidade da tela principal). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/orbita_panel"
     android:orientation="vertical"
-    android:padding="6dp"
-    android:background="@drawable/dialog_background"
-    android:gravity="center_horizontal">
+    android:tag="theme_ignore">
 
-    <!-- Title - Smaller -->
-    <TextView
+    <!-- Cabecalho: Voltar + titulo -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/dev_title"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="4dp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="12dp">
 
-    <!-- ScrollView for content -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/orbita_bg_pill"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:stateListAnimator="@null"
+            android:tag="theme_ignore"
+            android:text="@string/dev_back"
+            android:textAllCaps="false"
+            android:textColor="@color/orbita_text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:tag="theme_ignore"
+            android:text="@string/dev_title"
+            android:textColor="@color/orbita_text"
+            android:textSize="22sp" />
+    </LinearLayout>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:scrollbars="none">
+        android:clipToPadding="false"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="20dp"
+        android:scrollbars="none"
+        android:tag="theme_ignore">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:baselineAligned="false"
+            android:orientation="horizontal">
 
-            <!-- Storage Card - Compact -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="6dp"
-                app:cardElevation="1dp">
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:orientation="vertical">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/orbita_bg_card"
                     android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="16dp"
+                    android:tag="theme_ignore">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
                         android:text="@string/dev_sec_storage"
-                        android:textColor="#6B8EFF"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp" />
+                        android:textColor="@color/orbita_text"
+                        android:textSize="15sp" />
 
-                    <!-- Internal Storage -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="1dp">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <TextView
-                            android:layout_width="55dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_internal"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtInternalStorage"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:ellipsize="end"
                             android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
                     </LinearLayout>
 
                     <ProgressBar
                         android:id="@+id/internalStorageProgress"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="3dp"
-                        android:layout_marginBottom="2dp"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="10dp"
                         android:max="100"
                         android:progress="0"
-                        android:progressTint="#6B8EFF"
-                        android:backgroundTint="#333333" />
+                        android:progressDrawable="@drawable/devinfo_progress"
+                        android:tag="theme_ignore" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="2dp">
+                        android:layout_marginTop="6dp"
+                        android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/txtInternalUsed"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="start"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_used_default"
-                            android:textColor="#FF6B6B"
-                            android:textSize="8sp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtInternalFree"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_free_default"
-                            android:textColor="#4CAF50"
-                            android:textSize="8sp"
-                            android:gravity="center" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtInternalTotal"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_total_default"
-                            android:textColor="#6B8EFF"
-                            android:textSize="8sp"
-                            android:gravity="end" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
-            <!-- System Information Card - Compact Grid -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="6dp"
-                app:cardElevation="1dp">
+                    </LinearLayout>
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/orbita_bg_card"
                     android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="16dp"
+                    android:tag="theme_ignore">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
                         android:text="@string/dev_sec_system"
-                        android:textColor="#6B8EFF"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp" />
+                        android:textColor="@color/orbita_text"
+                        android:textSize="15sp" />
 
-                    <GridLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="2"
-                        android:rowCount="5">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <!-- Row 1 -->
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_model"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtDeviceModel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 2 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_manufacturer"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtManufacturer"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 3 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_android"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtAndroidVersion"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 4 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_api"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtApiLevel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 5 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_build"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtBuildNumber"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
-                    </GridLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-            <!-- Hardware Information Card - Compact Grid -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="6dp"
-                app:cardElevation="1dp">
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/orbita_bg_card"
                     android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="16dp"
+                    android:tag="theme_ignore">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/dev_sec_hardware"
-                        android:textColor="#6B8EFF"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp" />
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
+                        android:text="@string/dev_sec_battery"
+                        android:textColor="@color/orbita_text"
+                        android:textSize="15sp" />
 
-                    <GridLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="2"
-                        android:rowCount="5">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <!-- Row 1 - Total RAM -->
                         <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_level"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtBatteryLevel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_status"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtBatteryStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_temperature"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtBatteryTemp"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_health"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtBatteryHealth"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_voltage"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtBatteryVoltage"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_tech"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtBatteryTech"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/orbita_bg_card"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:tag="theme_ignore">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
+                        android:text="@string/dev_sec_hardware"
+                        android:textColor="@color/orbita_text"
+                        android:textSize="15sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_total_ram"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtTotalRAM"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 2 - Available RAM -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_available"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtAvailableRAM"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#4CAF50"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <!-- Row 3 - Processor -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_processor"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtProcessor"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <!-- Row 4 - CPU Cores -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_cpu_cores"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtCpuCores"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <!-- Row 5 - Resolution -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_resolution"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtResolution"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-                    </GridLayout>
-
-                    <!-- Density on its own line since it's longer -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="2dp">
-
-                        <TextView
-                            android:layout_width="55dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/dev_lbl_density"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp" />
-
-                        <TextView
-                            android:id="@+id/txtDensity"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:ellipsize="end"
                             android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
                     </LinearLayout>
 
-                    <!-- RAM Usage Bar -->
                     <ProgressBar
                         android:id="@+id/ramProgress"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="3dp"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="2dp"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="10dp"
                         android:max="100"
                         android:progress="0"
-                        android:progressTint="#FF9800"
-                        android:backgroundTint="#333333" />
+                        android:progressDrawable="@drawable/devinfo_progress"
+                        android:tag="theme_ignore" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
                         android:orientation="horizontal">
 
                         <TextView
@@ -467,408 +654,396 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="start"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_used_default"
-                            android:textColor="#FF6B6B"
-                            android:textSize="8sp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtRAMFree"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_free_default"
-                            android:textColor="#4CAF50"
-                            android:textSize="8sp"
-                            android:gravity="center" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtRAMTotal"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_total_default"
-                            android:textColor="#FF9800"
-                            android:textSize="8sp"
-                            android:gravity="end" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
-            <!-- Network Information Card - Compact -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="6dp"
-                app:cardElevation="1dp">
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_processor"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtProcessor"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_cpu_cores"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtCpuCores"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_resolution"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtResolution"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_lbl_density"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtDensity"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
+                            android:maxLines="1"
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/orbita_bg_card"
                     android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="16dp"
+                    android:tag="theme_ignore">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
                         android:text="@string/dev_sec_network"
-                        android:textColor="#6B8EFF"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp" />
+                        android:textColor="@color/orbita_text"
+                        android:textSize="15sp" />
 
-                    <GridLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:columnCount="2"
-                        android:rowCount="5">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <!-- Row 1 - IP Address -->
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_ip"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtDeviceIP"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 2 - MAC Address -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_mac"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtMacAddress"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 3 - Wi-Fi SSID -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_wifi"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtWifiSSID"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 4 - Signal Strength -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_signal"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtSignalStrength"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-                        <!-- Row 5 - Link Speed -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
                             android:text="@string/dev_lbl_link_speed"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/txtLinkSpeed"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
-                    </GridLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
+                    </LinearLayout>
 
-            <!-- Battery Information Card - Compact -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="6dp"
-                app:cardElevation="1dp">
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/orbita_bg_card"
                     android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="16dp"
+                    android:tag="theme_ignore">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/dev_sec_battery"
-                        android:textColor="#6B8EFF"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp" />
+                        android:layout_marginBottom="10dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:tag="theme_ignore"
+                        android:text="@string/devinfo_sec_app"
+                        android:textColor="@color/orbita_text"
+                        android:textSize="15sp" />
 
-                    <GridLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:columnCount="2"
-                        android:rowCount="5">
-
-                        <!-- Row 1 - Battery Level -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_level"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtBatteryLevel"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <!-- Row 2 - Status -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_status"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtBatteryStatus"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <!-- Row 3 - Temperature -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_temperature"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtBatteryTemp"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <!-- Row 4 - Health -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_health"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtBatteryHealth"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-
-                        <!-- Row 5 - Voltage -->
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_lbl_voltage"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="2dp" />
-
-                        <TextView
-                            android:id="@+id/txtBatteryVoltage"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-                    </GridLayout>
-
-                    <!-- Technology on its own line -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="2dp">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <TextView
-                            android:layout_width="55dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/dev_lbl_tech"
-                            android:textColor="#B3FFFFFF"
-                            android:textSize="10sp" />
+                            android:layout_marginEnd="12dp"
+                            android:tag="theme_ignore"
+                            android:text="@string/devinfo_lbl_version"
+                            android:textColor="@color/orbita_text_muted"
+                            android:textSize="12sp" />
 
                         <TextView
-                            android:id="@+id/txtBatteryTech"
+                            android:id="@+id/txtAppVersion"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/dev_loading"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
+                            android:ellipsize="end"
                             android:gravity="end"
                             android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:tag="theme_ignore"
+                            android:text="@string/dev_loading"
+                            android:textColor="@color/orbita_text"
+                            android:textSize="14sp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- App Information Card - Minimal -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="6dp"
-                app:cardElevation="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="6dp"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/dev_lbl_app"
-                        android:textColor="#6B8EFF"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:layout_marginEnd="4dp" />
-
-                    <TextView
-                        android:id="@+id/txtAppVersion"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/dev_loading"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
 
                     <TextView
                         android:id="@+id/txtPackageName"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text=""
-                        android:textColor="#808080"
-                        android:textSize="8sp"
-                        android:maxLines="1"
+                        android:layout_marginTop="8dp"
                         android:ellipsize="end"
-                        android:visibility="gone" />
+                        android:gravity="end"
+                        android:maxLines="1"
+                        android:tag="theme_ignore"
+                        android:text=""
+                        android:textColor="@color/orbita_text_muted"
+                        android:textSize="12sp" />
+
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
-
-    <!-- Back Button -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnBack"
-        android:layout_width="match_parent"
-        android:layout_height="32dp"
-        android:layout_marginTop="4dp"
-        android:backgroundTint="#333333"
-        android:text="@string/dev_back"
-        android:textColor="#FFFFFF"
-        android:textSize="10sp" />
-
 </LinearLayout>

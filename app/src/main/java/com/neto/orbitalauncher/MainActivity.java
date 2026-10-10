@@ -2098,10 +2098,12 @@ public class MainActivity extends AppCompatActivity {
         boolean changed = false;
         for (AppInfo app : appList) {
             if (seeded.contains(app.packageName)) continue;
-            String folder = defaultFolderFor(app);
-            if (folder == null) continue;
+            // Cada app e olhado uma vez so: depois disso o usuario manda
             seeded.add(app.packageName);
             changed = true;
+            String folder = defaultFolderFor(app);
+            if (folder == null && isLikelyGame(app)) folder = "Games";
+            if (folder == null) continue;
             if (isInAnyCategory(app.packageName)) continue;
             String key = findCategoryKey(folder);
             if (key == null) continue;
@@ -2128,6 +2130,42 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return null;
+    }
+
+    // Apps imersivos que nao sao jogos (nao vao para Games sozinhos)
+    private static final String[] NOT_GAMES = {
+            "bigscreen", "photon", "youtube", "browser", "navegador", "netflix", "primevideo",
+            "skybox", "pigasus", "vlc", "plex", "deovr", "heresphere",
+            "immersed", "spatial", "horizonworkrooms"
+    };
+
+    /**
+     * Jogo = o app diz ao Android que e jogo, ou e um app de VR imersivo do Quest.
+     * Apps da Meta e os da lista NOT_GAMES ficam de fora.
+     */
+    private boolean isLikelyGame(AppInfo app) {
+        if (getPackageName().equals(app.packageName) || isInSystemPackageList(app.packageName)) return false;
+        String n = java.text.Normalizer.normalize(app.label == null ? "" : app.label, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        for (String word : NOT_GAMES) {
+            if (n.contains(word)) return false;
+        }
+        try {
+            ApplicationInfo info = packageManager.getApplicationInfo(app.packageName, 0);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && info.category == ApplicationInfo.CATEGORY_GAME) {
+                return true;
+            }
+            @SuppressWarnings("deprecation")
+            boolean flaggedGame = (info.flags & ApplicationInfo.FLAG_IS_GAME) != 0;
+            if (flaggedGame) return true;
+        } catch (Exception e) {
+            return false;
+        }
+        Intent vr = new Intent(Intent.ACTION_MAIN);
+        vr.addCategory("com.oculus.intent.category.VR");
+        vr.setPackage(app.packageName);
+        List<ResolveInfo> found = packageManager.queryIntentActivities(vr, 0);
+        return found != null && !found.isEmpty();
     }
 
     /** Acha a pasta com esse nome, sem ligar para maiusculas. */

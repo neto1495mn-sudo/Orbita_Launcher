@@ -4,6 +4,9 @@
         <item name="colorPrimary">#6B8EFF</item>
         <item name="colorPrimaryVariant">#4A6AFF</item>
         <item name="colorOnPrimary">@color/white</item>
+        <!-- Janelas de aviso com a cara do painel (cinza, arredondadas) -->
+        <item name="alertDialogTheme">@style/Theme.Orbita.Dialog.Alert</item>
+        <item name="materialAlertDialogTheme">@style/Theme.Orbita.Dialog.MaterialAlert</item>
     </style>
 
     <!-- Tela principal: janela translucida, para a opacidade do fundo mostrar o ambiente em vez de preto -->
@@ -19,5 +22,44 @@
         <item name="colorPrimary">#4C8DFF</item>
         <item name="colorAccent">#4C8DFF</item>
         <item name="android:windowAnimationStyle">@null</item>
+        <item name="alertDialogTheme">@style/Theme.Orbita.Dialog.Alert</item>
+    </style>
+
+    <!-- Janelas de aviso (AlertDialog): painel cinza arredondado 20dp, titulo branco,
+         mensagem em cinza claro e botoes em azul. Nada de preto transparente. -->
+    <style name="Theme.Orbita.Dialog.Alert" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_bg_inset</item>
+        <item name="android:colorBackground">@color/orbita_panel</item>
+        <item name="android:backgroundDimAmount">0.45</item>
+        <item name="colorAccent">@color/orbita_accent</item>
+        <item name="colorPrimary">@color/orbita_accent</item>
+        <item name="colorControlNormal">@color/orbita_text_muted</item>
+        <item name="colorControlActivated">@color/orbita_accent</item>
+        <item name="android:textColorPrimary">@color/orbita_text</item>
+        <item name="android:textColorSecondary">@color/orbita_text_secondary</item>
+        <item name="android:textColorHint">@color/orbita_text_muted</item>
+        <item name="android:textColorLink">@color/orbita_accent</item>
+        <item name="textColorAlertDialogListItem">@color/orbita_text</item>
+        <item name="android:buttonBarButtonStyle">@style/Widget.Orbita.Dialog.Button</item>
+        <item name="buttonBarButtonStyle">@style/Widget.Orbita.Dialog.Button</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Orbita.Dialog.Button</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Orbita.Dialog.Button</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Orbita.Dialog.Button</item>
+    </style>
+
+    <style name="Widget.Orbita.Dialog.Button" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/orbita_accent</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- Mesmo visual para MaterialAlertDialogBuilder (caso venha a ser usado) -->
+    <style name="Theme.Orbita.Dialog.MaterialAlert" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="android:windowBackground">@drawable/dialog_bg_inset</item>
+        <item name="android:colorBackground">@color/orbita_panel</item>
+        <item name="colorSurface">@color/orbita_panel</item>
+        <item name="colorPrimary">@color/orbita_accent</item>
+        <item name="colorOnSurface">@color/orbita_text</item>
+        <item name="android:textColorPrimary">@color/orbita_text</item>
+        <item name="android:textColorSecondary">@color/orbita_text_secondary</item>
     </style>
 </resources>

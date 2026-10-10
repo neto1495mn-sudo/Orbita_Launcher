@@ -83,7 +83,7 @@
     <string name="dev_lbl_voltage">Voltage:</string>
     <string name="dev_lbl_tech">Tech:</string>
     <string name="dev_lbl_app">App:</string>
-    <string name="dev_back">← Back to Settings</string>
+    <string name="dev_back">← Back</string>
     <string name="dev_storage_error">Unable to read storage info</string>
     <string name="dev_unknown">Unknown</string>
     <string name="dev_resolution_fmt">%1$d x %2$d px</string>
@@ -135,4 +135,7 @@
     <string name="upd_apk_not_found">APK file not found</string>
     <string name="upd_installing">Installing update...</string>
     <string name="upd_error_installing">Error installing update: %1$s</string>
+    <string name="mgr_back">← Back</string>
+    <string name="devinfo_sec_app">App</string>
+    <string name="devinfo_lbl_version">Version:</string>
 </resources>

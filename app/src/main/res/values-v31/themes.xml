@@ -7,5 +7,7 @@
         <item name="colorOnPrimary">@color/white</item>
         <item name="android:windowSplashScreenBackground">@color/orbita_screen</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_empty</item>
+        <item name="alertDialogTheme">@style/Theme.Orbita.Dialog.Alert</item>
+        <item name="materialAlertDialogTheme">@style/Theme.Orbita.Dialog.MaterialAlert</item>
     </style>
 </resources>

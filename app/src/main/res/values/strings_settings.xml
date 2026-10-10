@@ -1,20 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="set_title">Settings</string>
-    <string name="set_section_launcher">LAUNCHER</string>
-    <string name="set_launcher_subtitle">Customize how the app behaves</string>
     <string name="set_edit_mode">Edit mode</string>
     <string name="set_categories">Categories</string>
     <string name="set_manage_categories">Manage categories</string>
     <string name="set_focus_trigger">Focus trigger</string>
     <string name="set_focus_trigger_hint">Point at Help &amp; Tips in the Meta library to open Orbita</string>
-    <string name="set_section_appearance">APPEARANCE</string>
-    <string name="set_sizes_opacity">Sizes and opacity</string>
     <string name="set_icon_size">Icon size</string>
     <string name="set_icon_size_range">90dp - 236dp (5 sizes)</string>
     <string name="set_bg_opacity">Background opacity</string>
-    <string name="set_section_startup">STARTUP</string>
-    <string name="set_autostart_options">Auto-start options</string>
     <string name="set_start_with_system">Start with system</string>
     <string name="set_status_off">Status: Off</string>
     <string name="set_status_on">Status: On</string>
@@ -22,36 +16,28 @@
     <string name="set_reopen_desc">When you tap X, the launcher opens again. During a game it stays quiet and comes back when you leave the game. Turning this on also turns on the focus trigger.</string>
     <string name="set_hide_meta_store">Hide Meta Store</string>
     <string name="set_hide_meta_store_desc">Closes the Meta Store automatically, unless you open it manually</string>
-    <string name="set_section_system">SYSTEM</string>
-    <string name="set_quest_system_controls">Quest system controls</string>
     <string name="set_native_settings">Native settings</string>
     <string name="set_open">Open</string>
     <string name="set_device_info">Device information</string>
     <string name="set_view">View</string>
     <string name="set_ip_address">IP address</string>
     <string name="set_ip_placeholder">IP 0.0.0.0</string>
-    <string name="set_section_updates">UPDATES</string>
     <string name="set_check_new_versions">Check for new versions</string>
     <string name="set_check_automatically">Check automatically</string>
     <string name="set_check_now">Check now</string>
     <string name="set_check_updates">Check for updates</string>
-    <string name="set_section_backup">BACKUP AND RESTORE</string>
     <string name="set_backup_subtitle">Save or restore your settings</string>
     <string name="set_backup">Back up</string>
     <string name="set_restore">Restore</string>
-    <string name="set_section_icons">ICONS</string>
     <string name="set_refresh_icons">Refresh icons</string>
-    <string name="set_section_usage">USAGE TIME</string>
     <string name="set_usage_subtitle">See playtime and usage</string>
     <string name="set_usage_monitor">Usage time monitor</string>
     <string name="set_grant_monitor_perms">Grant time monitor permissions</string>
     <string name="set_grant_permission">Grant permission</string>
     <string name="set_view_stats">View statistics</string>
-    <string name="set_section_quest_utils">QUEST UTILITIES</string>
     <string name="set_shell_via_shizuku">Shell commands via Shizuku</string>
     <string name="set_vr_shell">VR Shell</string>
     <string name="set_stop_vrshell">Stop VrShell</string>
-    <string name="set_section_apps">APPS</string>
     <string name="set_install_bundled">Manage installed apps</string>
     <string name="set_storage_manager">Storage manager</string>
     <string name="set_manage_storage">Manage storage</string>
@@ -177,4 +163,20 @@
     <string name="set_shizuku_btn_install">Install Shizuku</string>
     <string name="set_shizuku_btn_ready">Shizuku ready ✓</string>
     <string name="set_toast_shizuku_ready">Shizuku is installed, running and authorized</string>
+
+    <!-- Barra lateral e cartoes da tela de configuracoes -->
+    <string name="set_nav_general">General</string>
+    <string name="set_nav_appearance">Appearance</string>
+    <string name="set_nav_apps">Apps</string>
+    <string name="set_nav_quest">Quest &amp; system</string>
+    <string name="set_nav_playtime">Playtime</string>
+    <string name="set_nav_updates">Updates</string>
+    <string name="set_nav_backup">Backup</string>
+    <string name="set_back">Back</string>
+    <string name="set_categories_desc">Create, rename and organize your categories</string>
+    <string name="set_bg_opacity_desc">Transparency of the launcher background</string>
+    <string name="set_refresh_icons_desc">Clears the icon cache and reloads the cover art</string>
+    <string name="set_native_settings_desc">Opens the Quest\'s Android settings</string>
+    <string name="set_vr_shell_desc">Restarts the Quest interface (needs Shizuku)</string>
+    <string name="set_backup_restore_title">Backup and restore</string>
 </resources>
