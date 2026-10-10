@@ -172,7 +172,6 @@
     <string name="set_nav_playtime">Playtime</string>
     <string name="set_nav_updates">Updates</string>
     <string name="set_nav_backup">Backup</string>
-    <string name="set_back">Back</string>
     <string name="set_categories_desc">Create, rename and organize your categories</string>
     <string name="set_bg_opacity_desc">Transparency of the launcher background</string>
     <string name="set_refresh_icons_desc">Clears the icon cache and reloads the cover art</string>

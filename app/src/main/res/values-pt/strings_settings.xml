@@ -172,7 +172,6 @@
     <string name="set_nav_playtime">Tempo de jogo</string>
     <string name="set_nav_updates">Atualizações</string>
     <string name="set_nav_backup">Backup</string>
-    <string name="set_back">Voltar</string>
     <string name="set_categories_desc">Crie, renomeie e organize suas categorias</string>
     <string name="set_bg_opacity_desc">Transparência do fundo do launcher</string>
     <string name="set_refresh_icons_desc">Limpa o cache de ícones e recarrega as capas</string>
