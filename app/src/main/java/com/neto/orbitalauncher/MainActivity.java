@@ -662,8 +662,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Create the floating bulk-action bar that appears at the bottom of the
-     * screen when one or more apps are selected in edit mode. Provides
+     * Create the floating bulk-action column that appears on the right side
+     * of the screen when one or more apps are selected in edit mode. Provides
      * quick access to Move-to-Category, Uninstall, and Clear-Selection.
      * Visibility is managed by updateBulkActionBarVisibility().
      */
@@ -671,18 +671,18 @@ public class MainActivity extends AppCompatActivity {
         try {
             float d = getResources().getDisplayMetrics().density;
 
-            // Container - horizontal pill bar
+            // Container - vertical column on the right side
             bulkActionBar = new android.widget.LinearLayout(this);
-            bulkActionBar.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            bulkActionBar.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            bulkActionBar.setPadding((int)(16 * d), (int)(10 * d), (int)(16 * d), (int)(10 * d));
+            bulkActionBar.setOrientation(android.widget.LinearLayout.VERTICAL);
+            bulkActionBar.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+            bulkActionBar.setPadding((int)(10 * d), (int)(12 * d), (int)(10 * d), (int)(12 * d));
             bulkActionBar.setElevation(12 * d);
             bulkActionBar.setVisibility(View.GONE);
 
             // Themed pill-shaped background
             android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
             bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            bg.setCornerRadius(28 * d);
+            bg.setCornerRadius(20 * d);
             com.neto.orbitalauncher.theme.Theme theme =
                     com.neto.orbitalauncher.theme.ThemeManager.getInstance(this).getCurrentTheme();
             bg.setColor(theme.bgSecondary);
@@ -694,53 +694,53 @@ public class MainActivity extends AppCompatActivity {
             bulkActionCountLabel.setText(getString(R.string.main_selected_count, 0));
             bulkActionCountLabel.setTextColor(theme.textPrimary);
             bulkActionCountLabel.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
-            bulkActionCountLabel.setPadding(0, 0, (int)(16 * d), 0);
+            bulkActionCountLabel.setGravity(android.view.Gravity.CENTER);
+            bulkActionCountLabel.setPadding(0, (int)(2 * d), 0, (int)(8 * d));
             bulkActionBar.addView(bulkActionCountLabel);
 
             // Move-to-Category button
-            android.widget.Button moveBtn = makeBulkBarButton(getString(R.string.main_bulk_move), theme);
+            android.widget.Button moveBtn = makeBulkBarButton(getString(R.string.main_bulk_move), R.drawable.ic_bulk_move, theme);
             moveBtn.setOnClickListener(v -> showMultiAssignCategoryDialog());
             bulkActionBar.addView(moveBtn, makeBulkBarButtonParams(d));
 
             // Remove from current category button (only shows when viewing
             // a specific category like "Games" rather than "All Apps")
-            bulkActionRemoveCategoryBtn = makeBulkBarButton(getString(R.string.main_bulk_remove_category), theme);
+            bulkActionRemoveCategoryBtn = makeBulkBarButton(getString(R.string.main_bulk_remove_category), R.drawable.ic_bulk_remove, theme);
             bulkActionRemoveCategoryBtn.setOnClickListener(v -> removeSelectedFromCurrentCategory());
             bulkActionBar.addView(bulkActionRemoveCategoryBtn, makeBulkBarButtonParams(d));
 
             // Rename button (only shows when exactly 1 app selected)
-            bulkActionRenameBtn = makeBulkBarButton(getString(R.string.main_bulk_rename), theme);
+            bulkActionRenameBtn = makeBulkBarButton(getString(R.string.main_bulk_rename), R.drawable.ic_bulk_edit, theme);
             bulkActionRenameBtn.setOnClickListener(v -> renameSingleSelected());
             bulkActionBar.addView(bulkActionRenameBtn, makeBulkBarButtonParams(d));
 
             // Playtime button (only shows when exactly 1 app selected)
-            bulkActionPlaytimeBtn = makeBulkBarButton(getString(R.string.main_bulk_stats), theme);
+            bulkActionPlaytimeBtn = makeBulkBarButton(getString(R.string.main_bulk_stats), R.drawable.ic_bulk_stats, theme);
             bulkActionPlaytimeBtn.setOnClickListener(v -> showPlaytimeForSingleSelected());
             bulkActionBar.addView(bulkActionPlaytimeBtn, makeBulkBarButtonParams(d));
 
             // App settings button (only shows when exactly 1 app selected):
             // opens the native Android settings screen for that app
-            bulkActionAppSettingsBtn = makeBulkBarButton(getString(R.string.main_bulk_app_settings), theme);
+            bulkActionAppSettingsBtn = makeBulkBarButton(getString(R.string.main_bulk_app_settings), R.drawable.ic_settings, theme);
             bulkActionAppSettingsBtn.setOnClickListener(v -> openAppSettingsForSingleSelected());
             bulkActionBar.addView(bulkActionAppSettingsBtn, makeBulkBarButtonParams(d));
 
             // Uninstall button
-            android.widget.Button uninstallBtn = makeBulkBarButton(getString(R.string.main_bulk_uninstall), theme);
+            android.widget.Button uninstallBtn = makeBulkBarButton(getString(R.string.main_bulk_uninstall), R.drawable.ic_delete, theme);
             uninstallBtn.setOnClickListener(v -> confirmAndUninstallSelected());
             bulkActionBar.addView(uninstallBtn, makeBulkBarButtonParams(d));
 
             // Clear button
-            android.widget.Button clearBtn = makeBulkBarButton(getString(R.string.main_bulk_clear), theme);
+            android.widget.Button clearBtn = makeBulkBarButton(getString(R.string.main_bulk_clear), R.drawable.ic_close, theme);
             clearBtn.setOnClickListener(v -> clearSelection());
             bulkActionBar.addView(clearBtn, makeBulkBarButtonParams(d));
 
-            // Position at bottom-center
+            // Position at the right edge, vertically centered
             android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-                    android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+                    (int)(210 * d),
                     android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
-            params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
-            int marginBottom = (int)(80 * d); // sits above the floating-favorites button
-            params.setMargins(0, 0, 0, marginBottom);
+            params.gravity = android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL;
+            params.setMargins(0, 0, (int)(20 * d), 0);
 
             addContentView(bulkActionBar, params);
             android.util.Log.i("MainActivity", "Bulk action bar added");
@@ -749,7 +749,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private android.widget.Button makeBulkBarButton(String text,
+    private android.widget.Button makeBulkBarButton(String text, int iconRes,
                                                     com.neto.orbitalauncher.theme.Theme theme) {
         float d = getResources().getDisplayMetrics().density;
         android.widget.Button btn = new android.widget.Button(this);
@@ -757,7 +757,19 @@ public class MainActivity extends AppCompatActivity {
         btn.setTextColor(theme.textPrimary);
         btn.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
         btn.setAllCaps(false);
-        btn.setPadding((int)(14 * d), (int)(6 * d), (int)(14 * d), (int)(6 * d));
+        btn.setGravity(android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL);
+        btn.setPadding((int)(14 * d), (int)(9 * d), (int)(14 * d), (int)(9 * d));
+
+        // Android-style line icon on the left, tinted to the text color
+        android.graphics.drawable.Drawable icon = getDrawable(iconRes);
+        if (icon != null) {
+            icon = icon.mutate();
+            int size = (int)(18 * d);
+            icon.setBounds(0, 0, size, size);
+            icon.setTint(iconRes == R.drawable.ic_delete ? 0xFFFF6B6B : theme.textPrimary);
+            btn.setCompoundDrawablesRelative(icon, null, null, null);
+            btn.setCompoundDrawablePadding((int)(12 * d));
+        }
         btn.setMinHeight(0);
         btn.setMinimumHeight(0);
 
@@ -772,9 +784,9 @@ public class MainActivity extends AppCompatActivity {
 
     private android.widget.LinearLayout.LayoutParams makeBulkBarButtonParams(float density) {
         android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
-                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins((int)(4 * density), 0, (int)(4 * density), 0);
+        lp.setMargins(0, (int)(3 * density), 0, (int)(3 * density));
         return lp;
     }
 
@@ -812,10 +824,10 @@ public class MainActivity extends AppCompatActivity {
             if (bulkActionBar.getVisibility() != View.VISIBLE) {
                 bulkActionBar.setVisibility(View.VISIBLE);
                 bulkActionBar.setAlpha(0f);
-                bulkActionBar.setTranslationY(40 * getResources().getDisplayMetrics().density);
+                bulkActionBar.setTranslationX(40 * getResources().getDisplayMetrics().density);
                 bulkActionBar.animate()
                         .alpha(1f)
-                        .translationY(0f)
+                        .translationX(0f)
                         .setDuration(180)
                         .start();
             }
@@ -823,7 +835,7 @@ public class MainActivity extends AppCompatActivity {
             if (bulkActionBar.getVisibility() == View.VISIBLE) {
                 bulkActionBar.animate()
                         .alpha(0f)
-                        .translationY(40 * getResources().getDisplayMetrics().density)
+                        .translationX(40 * getResources().getDisplayMetrics().density)
                         .setDuration(140)
                         .withEndAction(() -> bulkActionBar.setVisibility(View.GONE))
                         .start();
