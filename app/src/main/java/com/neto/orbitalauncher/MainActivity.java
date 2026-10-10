@@ -652,6 +652,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        // Brilho, Wi-Fi, Bluetooth, Tempo de jogo, Info do aparelho e Energia.
+        // Esses controles existiam no codigo mas nunca eram adicionados ao painel.
+        initializeShizukuForQuickSettings();
+        addExtendedQuickSettingsControls();
     }
 
     /**
@@ -1199,7 +1204,7 @@ public class MainActivity extends AppCompatActivity {
 
             android.widget.LinearLayout section = new android.widget.LinearLayout(this);
             section.setOrientation(android.widget.LinearLayout.VERTICAL);
-            section.setPadding((int)(16 * d), (int)(8 * d), (int)(16 * d), (int)(16 * d));
+            section.setPadding(0, (int)(8 * d), 0, (int)(16 * d));
 
             // --- Brightness section ---
             android.widget.TextView brightnessLabel = new android.widget.TextView(this);
@@ -4710,6 +4715,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (shizukuManager != null) shizukuManager.cleanup();
 
         // "Reabrir ao fechar": fechou no X -> pede para reabrir (o servico ignora se ha jogo aberto)
         try {
