@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="main_cd_all_apps">Todos os apps</string>
-    <string name="main_cd_categories">Explorador de arquivos</string>
     <string name="main_cd_playtime_stats">Estatísticas de tempo de jogo</string>
     <string name="main_cd_device_info">Informações do dispositivo</string>
     <string name="main_cd_quick_settings">Configurações rápidas</string>
@@ -69,6 +68,12 @@
     <string name="main_qs_bluetooth_off">Bluetooth: Desligado</string>
     <string name="main_toast_shizuku_brightness">É necessário o Shizuku para controlar o brilho</string>
     <string name="main_toast_brightness_failed">Falha ao ajustar o brilho</string>
+    <string name="main_qs_battery_saver_on">Economia: Ligada</string>
+    <string name="main_qs_battery_saver_off">Economia: Desligada</string>
+    <string name="main_qs_guardian_on">Guardião: Ativo</string>
+    <string name="main_qs_guardian_paused">Guardião: Pausado</string>
+    <string name="main_toast_shizuku_battery_saver">É necessário o Shizuku para a economia de bateria</string>
+    <string name="main_toast_shizuku_guardian">É necessário o Shizuku para pausar o Guardião</string>
     <string name="main_toast_shizuku_wifi">É necessário o Shizuku para ligar/desligar o Wi-Fi</string>
     <string name="main_toast_wifi_toggle_failed">Falha ao ligar/desligar o Wi-Fi</string>
     <string name="main_toast_shizuku_bluetooth">É necessário o Shizuku para ligar/desligar o Bluetooth</string>
@@ -116,7 +121,6 @@
     <string name="main_toast_removed_from_categories">%1$d app(s) removido(s) das categorias</string>
     <string name="main_toast_error">Erro: %1$s</string>
     <string name="main_toast_moved_to_category">%1$d app(s) movido(s) para %2$s</string>
-    <string name="main_toast_file_explorer_failed">Não foi possível abrir o explorador de arquivos</string>
     <string name="main_toast_no_categories">Nenhuma categoria disponível. Crie categorias nas Configurações.</string>
     <string name="main_move_dialog_title">Mover %1$d app(s) para a categoria</string>
     <string name="main_already_in_category">%1$d app(s) já estavam nessa categoria</string>

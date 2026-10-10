@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="main_cd_all_apps">All apps</string>
-    <string name="main_cd_categories">File explorer</string>
     <string name="main_cd_playtime_stats">Playtime stats</string>
     <string name="main_cd_device_info">Device info</string>
     <string name="main_cd_quick_settings">Quick settings</string>
@@ -69,6 +68,12 @@
     <string name="main_qs_bluetooth_off">Bluetooth: Off</string>
     <string name="main_toast_shizuku_brightness">Shizuku required to control brightness</string>
     <string name="main_toast_brightness_failed">Failed to set brightness</string>
+    <string name="main_qs_battery_saver_on">Battery saver: On</string>
+    <string name="main_qs_battery_saver_off">Battery saver: Off</string>
+    <string name="main_qs_guardian_on">Guardian: On</string>
+    <string name="main_qs_guardian_paused">Guardian: Paused</string>
+    <string name="main_toast_shizuku_battery_saver">Shizuku required for battery saver</string>
+    <string name="main_toast_shizuku_guardian">Shizuku required to pause the Guardian</string>
     <string name="main_toast_shizuku_wifi">Shizuku required to toggle Wi-Fi</string>
     <string name="main_toast_wifi_toggle_failed">Failed to toggle Wi-Fi</string>
     <string name="main_toast_shizuku_bluetooth">Shizuku required to toggle Bluetooth</string>
@@ -116,7 +121,6 @@
     <string name="main_toast_removed_from_categories">Removed %1$d app(s) from categories</string>
     <string name="main_toast_error">Error: %1$s</string>
     <string name="main_toast_moved_to_category">Moved %1$d app(s) to %2$s</string>
-    <string name="main_toast_file_explorer_failed">Could not open the file explorer</string>
     <string name="main_toast_no_categories">No categories available. Create categories in Settings.</string>
     <string name="main_move_dialog_title">Move %1$d app(s) to category</string>
     <string name="main_already_in_category">%1$d app(s) were already in that category</string>

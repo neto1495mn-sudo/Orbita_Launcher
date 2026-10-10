@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
 
     // RESTORED: Icon scale values from old launcher (82, 99, 125, 165, 236 dp)
     private static final int[] ICON_SCALES_DP = {90, 110, 140, 180, 236};
-    private static final int DEFAULT_SCALE_INDEX = 2;  // 140dp default
+    private static final int DEFAULT_SCALE_INDEX = 3;  // 180dp default
 
     // Card overhead: margin (12dp each side = 24dp) + padding (8dp each side = 16dp) = 40dp total
     private static final int CARD_HORIZONTAL_OVERHEAD_DP = 22;
@@ -199,6 +199,8 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.TextView brightnessValueLabel;
     private android.widget.Button wifiToggleBtn;
     private android.widget.Button bluetoothToggleBtn;
+    private android.widget.Button batterySaverToggleBtn;
+    private android.widget.Button guardianToggleBtn;
     private QuickSettingsManager quickSettingsManager;
     private Handler quickSettingsHandler = new Handler();
     private Runnable quickSettingsUpdateRunnable;
@@ -1267,6 +1269,27 @@ public class MainActivity extends AppCompatActivity {
 
             section.addView(togglesRow);
 
+            // --- Economia de bateria + Guardiao ---
+            android.widget.LinearLayout togglesRow2 = new android.widget.LinearLayout(this);
+            togglesRow2.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            togglesRow2.setPadding(0, (int)(8 * d), 0, 0);
+
+            batterySaverToggleBtn = makeQuickSettingsButton(getString(R.string.main_qs_battery_saver_off), theme);
+            batterySaverToggleBtn.setOnClickListener(v -> toggleBatterySaver());
+            android.widget.LinearLayout.LayoutParams half5 = new android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            half5.setMargins(0, 0, (int)(4 * d), 0);
+            togglesRow2.addView(batterySaverToggleBtn, half5);
+
+            guardianToggleBtn = makeQuickSettingsButton(getString(R.string.main_qs_guardian_on), theme);
+            guardianToggleBtn.setOnClickListener(v -> toggleGuardian());
+            android.widget.LinearLayout.LayoutParams half6 = new android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            half6.setMargins((int)(4 * d), 0, 0, 0);
+            togglesRow2.addView(guardianToggleBtn, half6);
+
+            section.addView(togglesRow2);
+
             // --- Tempo de jogo + Info do aparelho (sairam da barra lateral) ---
             android.widget.LinearLayout infoRow = new android.widget.LinearLayout(this);
             infoRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
@@ -1408,6 +1431,46 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** Liga/desliga a economia de bateria do Android (via Shizuku). */
+    private void toggleBatterySaver() {
+        if (shizukuManager == null || !shizukuManager.isReady()) {
+            Toast.makeText(this, getString(R.string.main_toast_shizuku_battery_saver), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        int next = isBatterySaverOn() ? 0 : 1;
+        shizukuManager.executeShellCommand("settings put global low_power " + next + "; cmd power set-mode " + next);
+        new Handler(Looper.getMainLooper()).postDelayed(this::refreshQuickSettingsState, 500);
+    }
+
+    private boolean isBatterySaverOn() {
+        android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+        return pm != null && pm.isPowerSaveMode();
+    }
+
+    /**
+     * Pausa/volta o Guardiao do Quest (via Shizuku). Usa a propriedade de depuracao da Meta;
+     * vale ate reiniciar o Quest e pode nao funcionar em todas as versoes do sistema.
+     */
+    private void toggleGuardian() {
+        if (shizukuManager == null || !shizukuManager.isReady()) {
+            Toast.makeText(this, getString(R.string.main_toast_shizuku_guardian), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        boolean pause = !isGuardianPaused();
+        shizukuManager.executeShellCommand("setprop debug.oculus.guardian_pause " + (pause ? 1 : 0));
+        prefs.edit().putBoolean("guardian_paused", pause).apply();
+        new Handler(Looper.getMainLooper()).postDelayed(this::refreshQuickSettingsState, 500);
+    }
+
+    private boolean isGuardianPaused() {
+        try {
+            Class<?> sp = Class.forName("android.os.SystemProperties");
+            String v = (String) sp.getMethod("get", String.class).invoke(null, "debug.oculus.guardian_pause");
+            if (v != null && !v.isEmpty()) return "1".equals(v);
+        } catch (Exception ignored) { }
+        return prefs.getBoolean("guardian_paused", false);
+    }
+
     private void confirmReboot() {
         if (shizukuManager == null || !shizukuManager.isReady()) {
             Toast.makeText(this, getString(R.string.main_toast_shizuku_reboot), Toast.LENGTH_SHORT).show();
@@ -1457,6 +1520,14 @@ public class MainActivity extends AppCompatActivity {
         }
         if (brightnessSeekBar != null) {
             brightnessSeekBar.setProgress(readCurrentBrightness());
+        }
+        if (batterySaverToggleBtn != null) {
+            batterySaverToggleBtn.setText(getString(isBatterySaverOn()
+                    ? R.string.main_qs_battery_saver_on : R.string.main_qs_battery_saver_off));
+        }
+        if (guardianToggleBtn != null) {
+            guardianToggleBtn.setText(getString(isGuardianPaused()
+                    ? R.string.main_qs_guardian_paused : R.string.main_qs_guardian_on));
         }
     }
 
@@ -3391,9 +3462,7 @@ public class MainActivity extends AppCompatActivity {
             View navAll = findViewById(R.id.navAll);
             if (navAll != null) navAll.setOnClickListener(v -> toggleSideCategoryList());
 
-            View navCategories = findViewById(R.id.navCategories);
             View dropdown = findViewById(R.id.btnCategoryDropdown);
-            if (navCategories != null) navCategories.setOnClickListener(v -> openFileExplorer());
             if (dropdown != null) dropdown.setOnClickListener(v -> showCategoryPopup(v));
 
             View navQuick = findViewById(R.id.navQuickSettings);
@@ -3405,25 +3474,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("MainActivity", "setupSideNav failed", e);
         }
-    }
-
-    /** Abre o explorador de arquivos principal do aparelho (DocumentsUI). */
-    private void openFileExplorer() {
-        Intent[] attempts = new Intent[4];
-        attempts[0] = new Intent(Intent.ACTION_MAIN)
-                .setClassName("com.android.documentsui", "com.android.documentsui.files.FilesActivity");
-        attempts[1] = new Intent("android.intent.action.VIEW_DOWNLOADS");
-        attempts[2] = getPackageManager().getLaunchIntentForPackage("com.android.documentsui");
-        attempts[3] = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        for (Intent it : attempts) {
-            if (it == null) continue;
-            try {
-                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(it);
-                return;
-            } catch (Exception ignored) { }
-        }
-        Toast.makeText(this, getString(R.string.main_toast_file_explorer_failed), Toast.LENGTH_SHORT).show();
     }
 
     // ------------------------------------------------------------------
@@ -3516,8 +3566,74 @@ public class MainActivity extends AppCompatActivity {
         });
         item.setOnFocusChangeListener((v, hasFocus) -> styleSideCategoryItem(v, hasFocus));
 
+        // Soltar um app arrastado aqui move o app para esta pasta
+        item.setOnDragListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.DragEvent.ACTION_DRAG_STARTED:
+                    return event.getLocalState() instanceof String;
+                case android.view.DragEvent.ACTION_DRAG_ENTERED:
+                    styleSideCategoryItem(v, true);
+                    return true;
+                case android.view.DragEvent.ACTION_DRAG_EXITED:
+                case android.view.DragEvent.ACTION_DRAG_ENDED:
+                    styleSideCategoryItem(v, false);
+                    return true;
+                case android.view.DragEvent.ACTION_DROP:
+                    styleSideCategoryItem(v, false);
+                    dropAppOnCategory((String) event.getLocalState(), key);
+                    return true;
+                default:
+                    return true;
+            }
+        });
+
         styleSideCategoryItem(item, false);
         return item;
+    }
+
+    // A lista foi aberta so por causa do arrasto? Entao fecha de novo quando o arrasto acabar.
+    private boolean sideListOpenedForDrag = false;
+
+    /** Comeca a arrastar o app (depois do toque longo), abrindo a lista de pastas se estiver fechada. */
+    private void startAppDrag(View v, AppInfo app) {
+        try {
+            if (!sideCategoriesExpanded) {
+                toggleSideCategoryList();
+                sideListOpenedForDrag = true;
+            }
+            View scroll = findViewById(R.id.sideCategoryScroll);
+            if (scroll != null) {
+                scroll.setOnDragListener((sv, event) -> {
+                    if (event.getAction() == android.view.DragEvent.ACTION_DRAG_ENDED && sideListOpenedForDrag) {
+                        sideListOpenedForDrag = false;
+                        if (sideCategoriesExpanded) toggleSideCategoryList();
+                    }
+                    return true;
+                });
+            }
+            android.content.ClipData data = android.content.ClipData.newPlainText("orbita_app", app.packageName);
+            v.startDragAndDrop(data, new View.DragShadowBuilder(v), app.packageName, 0);
+        } catch (Exception e) {
+            Log.w("MainActivity", "startAppDrag failed", e);
+        }
+    }
+
+    /** Move o app solto para a pasta (ou tira de todas as pastas, se for "Todos"). */
+    private void dropAppOnCategory(String packageName, String key) {
+        if (packageName == null) return;
+        Set<String> one = new HashSet<>();
+        one.add(packageName);
+        if ("All Apps".equals(key)) {
+            int removed = removeAppsFromCategoriesSync(one);
+            Toast.makeText(this, getString(R.string.main_toast_removed_from_categories, removed), Toast.LENGTH_SHORT).show();
+        } else {
+            int moved = moveAppsToCategorySync(key, one);
+            Toast.makeText(this, getString(R.string.main_toast_moved_to_category, moved, displayCategoryName(key)), Toast.LENGTH_SHORT).show();
+        }
+        selectedApps.remove(packageName);
+        updateBulkActionBarVisibility();
+        filterApps(searchEditText != null ? searchEditText.getText().toString() : "");
+        if (appAdapter != null) appAdapter.notifyDataSetChanged();
     }
 
     /** Fundo do item: azul quando e a categoria aberta, cinza claro no hover, transparente no resto. */
@@ -4004,8 +4120,10 @@ public class MainActivity extends AppCompatActivity {
                 // Long-press: just enter selection mode for this app. No menu.
                 // All single-app and bulk actions live on the floating bar
                 // that appears when something is selected.
+                // Segurando, da para arrastar o app ate uma pasta da barra lateral.
                 holder.cardView.setOnLongClickListener(v -> {
                     toggleAppSelection(app);
+                    startAppDrag(v, app);
                     return true;
                 });
             }

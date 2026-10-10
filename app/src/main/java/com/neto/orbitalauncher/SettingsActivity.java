@@ -58,7 +58,7 @@ public class SettingsActivity extends AppCompatActivity {
     // Icon scale values from old launcher (82, 99, 125, 165, 236 dp)
     // These map to seekbar positions 0-100
     private static final int[] ICON_SCALES_DP = {90, 110, 140, 180, 236};
-    private static final int DEFAULT_SCALE_INDEX = 2;  // 140dp
+    private static final int DEFAULT_SCALE_INDEX = 3;  // 180dp
     private static final int ICON_SIZE_MIN_DP = 90;
     private static final int ICON_SIZE_MAX_DP = 236;
 
@@ -314,15 +314,6 @@ public class SettingsActivity extends AppCompatActivity {
         }
         if (btnRestartUI != null) {
             btnRestartUI.setOnClickListener(v -> restartQuestUI());
-        }
-
-        // BUNDLED APPS BUTTON
-        Button btnBundledApps = findViewById(R.id.btnBundledApps);
-        if (btnBundledApps != null) {
-            btnBundledApps.setOnClickListener(v -> {
-                Intent bundledIntent = new Intent(this, BundledAppsActivity.class);
-                startActivity(bundledIntent);
-            });
         }
 
         // APP MANAGER BUTTON

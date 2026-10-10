@@ -16,7 +16,8 @@ Organize your apps, track your playtime and set up the launcher your way.
 - Category menu ("All Apps" and your own categories)
 - Hide apps you do not want to see
 - Sidebar: tap the apps icon to drop down your categories, each with an icon picked from its name (games, video, music, tools, fitness, social; any other name gets a plain folder); tap again to fold it up
-- Quick settings panel (volume, brightness, Wi-Fi, Bluetooth, playtime, device info, power)
+- Quick settings panel (volume, brightness, Wi-Fi, Bluetooth, battery saver, Guardian pause, playtime, device info, power)
+- Long-press an app and drag it onto a category in the sidebar to move it there
 - Clock, IP address, Wi-Fi signal and battery in the status bar
 
 ### Categories
@@ -37,7 +38,7 @@ Organize your apps, track your playtime and set up the launcher your way.
 - **Backup and restore:** export and import categories and settings
 - **Updates:** check now or automatically; you are only offered a download when a newer version exists
 - **Quest utilities:** VR Shell and storage manager (use Shizuku)
-- **Applications:** bundled apps and app manager
+- **Applications:** app manager
 
 ### App settings shortcut
 Long-press an app and tap **App settings** to open its native Android settings screen (permissions, storage, force stop).

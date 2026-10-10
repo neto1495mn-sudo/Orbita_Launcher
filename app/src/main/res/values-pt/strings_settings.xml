@@ -53,9 +53,7 @@
     <string name="set_vr_shell">VR Shell</string>
     <string name="set_stop_vrshell">Parar VrShell</string>
     <string name="set_section_apps">APLICATIVOS</string>
-    <string name="set_install_bundled">Instalar APKs incluídos</string>
-    <string name="set_bundled_apps">Apps incluídos</string>
-    <string name="set_view_apps">Ver apps</string>
+    <string name="set_install_bundled">Gerenciar apps instalados</string>
     <string name="set_storage_manager">Gerenciador de armazenamento</string>
     <string name="set_manage_storage">Gerenciar armazenamento</string>
     <string name="set_close">Fechar</string>

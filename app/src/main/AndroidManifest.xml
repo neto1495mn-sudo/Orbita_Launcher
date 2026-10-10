@@ -124,14 +124,6 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density|uiMode"
             android:windowSoftInputMode="stateHidden|adjustResize" />
 
-        <!-- Bundled Apps Installer Activity -->
-        <activity
-            android:name=".BundledAppsActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Orbita.Screen"
-            android:screenOrientation="landscape"
-            android:windowSoftInputMode="stateHidden|adjustResize" />
-
         <!-- App Manager - List sideloaded apps with clear data/cache buttons -->
         <activity
             android:name=".AppManagerActivity"

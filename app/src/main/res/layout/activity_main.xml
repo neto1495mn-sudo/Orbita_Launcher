@@ -66,20 +66,6 @@
             </ScrollView>
 
             <ImageView
-                android:id="@+id/navCategories"
-                android:layout_width="46dp"
-                android:layout_height="46dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
-                android:padding="11dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:contentDescription="@string/main_cd_categories"
-                android:focusable="true"
-                android:src="@drawable/ic_nav_categories"
-                app:tint="#FFFFFF" />
-
-            <ImageView
                 android:id="@+id/navQuickSettings"
                 android:layout_width="46dp"
                 android:layout_height="46dp"
