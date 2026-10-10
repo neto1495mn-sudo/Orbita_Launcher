@@ -92,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
     // Hosts both bulk actions (Move, Uninstall) and single-app actions
     // (Rename, Playtime) that show only when exactly one app is selected.
     private android.widget.LinearLayout bulkActionBar;
+    // App perto do qual a coluna de opcoes aparece (o ultimo que foi apertado)
+    private String optionsAnchorPackage;
+    private android.widget.Button bulkActionAppearanceBtn;
     private android.widget.TextView bulkActionCountLabel;
     private android.widget.Button bulkActionRenameBtn;
     private android.widget.Button bulkActionPlaytimeBtn;
@@ -539,6 +542,13 @@ public class MainActivity extends AppCompatActivity {
                     Glide.with(MainActivity.this).resumeRequests();
                 }
             }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (bulkActionBar != null && bulkActionBar.getVisibility() == View.VISIBLE) {
+                    positionOptionsNearApp(false);
+                }
+            }
         });
 
         startStatusUpdates();
@@ -624,6 +634,11 @@ public class MainActivity extends AppCompatActivity {
             bulkActionPlaytimeBtn.setOnClickListener(v -> showPlaytimeForSingleSelected());
             bulkActionBar.addView(bulkActionPlaytimeBtn, makeBulkBarButtonParams(d));
 
+            // Aparencia (so com 1 app): foto da loja da Meta ou da colecao do Evolve
+            bulkActionAppearanceBtn = makeBulkBarButton(getString(R.string.main_bulk_appearance), R.drawable.ic_bulk_image, theme);
+            bulkActionAppearanceBtn.setOnClickListener(v -> showAppearanceForSingleSelected());
+            bulkActionBar.addView(bulkActionAppearanceBtn, makeBulkBarButtonParams(d));
+
             // App settings button (only shows when exactly 1 app selected):
             // opens the native Android settings screen for that app
             bulkActionAppSettingsBtn = makeBulkBarButton(getString(R.string.main_bulk_app_settings), R.drawable.ic_settings, theme);
@@ -635,12 +650,11 @@ public class MainActivity extends AppCompatActivity {
             uninstallBtn.setOnClickListener(v -> confirmAndUninstallSelected());
             bulkActionBar.addView(uninstallBtn, makeBulkBarButtonParams(d));
 
-            // Position at the right edge, vertically centered
+            // A posicao e calculada na hora, do lado do app apertado (positionOptionsNearApp)
             android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
                     (int)(210 * d),
                     android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
-            params.gravity = android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL;
-            params.setMargins(0, 0, (int)(20 * d), 0);
+            params.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
 
             addContentView(bulkActionBar, params);
             android.util.Log.i("MainActivity", "Bulk action bar added");
@@ -708,6 +722,9 @@ public class MainActivity extends AppCompatActivity {
         if (bulkActionPlaytimeBtn != null) {
             bulkActionPlaytimeBtn.setVisibility(singleSelected ? View.VISIBLE : View.GONE);
         }
+        if (bulkActionAppearanceBtn != null) {
+            bulkActionAppearanceBtn.setVisibility(singleSelected ? View.VISIBLE : View.GONE);
+        }
         if (bulkActionAppSettingsBtn != null) {
             bulkActionAppSettingsBtn.setVisibility(singleSelected ? View.VISIBLE : View.GONE);
         }
@@ -728,26 +745,122 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 bulkActionCountLabel.setText(getString(R.string.main_selected_count, count));
             }
+            if (optionsAnchorPackage == null || !selectedApps.contains(optionsAnchorPackage)) {
+                optionsAnchorPackage = null;
+                for (String pkg : selectedApps) optionsAnchorPackage = pkg;
+            }
             if (bulkActionBar.getVisibility() != View.VISIBLE) {
+                positionOptionsNearApp(false);
                 bulkActionBar.setVisibility(View.VISIBLE);
                 bulkActionBar.setAlpha(0f);
-                bulkActionBar.setTranslationX(40 * getResources().getDisplayMetrics().density);
+                bulkActionBar.setScaleX(0.96f);
+                bulkActionBar.setScaleY(0.96f);
                 bulkActionBar.animate()
                         .alpha(1f)
-                        .translationX(0f)
-                        .setDuration(180)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(160)
+                        .withEndAction(null)
                         .start();
+            } else {
+                positionOptionsNearApp(true);
             }
         } else {
             if (bulkActionBar.getVisibility() == View.VISIBLE) {
                 bulkActionBar.animate()
                         .alpha(0f)
-                        .translationX(40 * getResources().getDisplayMetrics().density)
-                        .setDuration(140)
+                        .scaleX(0.96f)
+                        .scaleY(0.96f)
+                        .setDuration(120)
                         .withEndAction(() -> bulkActionBar.setVisibility(View.GONE))
                         .start();
             }
         }
+    }
+
+    /**
+     * Coloca a coluna de opcoes colada do lado do app apertado: a direita dele,
+     * ou a esquerda se nao couber, sempre dentro da tela.
+     */
+    private void positionOptionsNearApp(boolean animate) {
+        if (bulkActionBar == null || optionsAnchorPackage == null) return;
+        View content = findViewById(android.R.id.content);
+        View card = findCardForPackage(optionsAnchorPackage);
+        if (content == null || card == null || content.getWidth() == 0) return;
+
+        float d = getResources().getDisplayMetrics().density;
+        int[] c = new int[2];
+        int[] a = new int[2];
+        content.getLocationOnScreen(c);
+        card.getLocationOnScreen(a);
+        int cardLeft = a[0] - c[0];
+        int cardTop = a[1] - c[1];
+
+        int barW = bulkActionBar.getLayoutParams().width;
+        bulkActionBar.measure(
+                View.MeasureSpec.makeMeasureSpec(barW, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int barH = bulkActionBar.getMeasuredHeight();
+
+        int gap = (int) (12 * d);
+        int edge = (int) (8 * d);
+        int x = cardLeft + card.getWidth() + gap;
+        if (x + barW > content.getWidth() - edge) x = cardLeft - gap - barW;
+        x = Math.max(edge, Math.min(x, content.getWidth() - edge - barW));
+        int y = cardTop + card.getHeight() / 2 - barH / 2;
+        y = Math.max(edge, Math.min(y, content.getHeight() - edge - barH));
+
+        if (animate) {
+            bulkActionBar.animate().translationX(x).translationY(y).setDuration(150).start();
+        } else {
+            bulkActionBar.setTranslationX(x);
+            bulkActionBar.setTranslationY(y);
+        }
+    }
+
+    /** O cartao do app na grade (so os que estao aparecendo na tela). */
+    private View findCardForPackage(String packageName) {
+        if (appsGrid == null || packageName == null) return null;
+        for (int i = 0; i < appsGrid.getChildCount(); i++) {
+            View child = appsGrid.getChildAt(i);
+            if (packageName.equals(child.getTag(R.id.cardApp))) {
+                View card = child.findViewById(R.id.cardApp);
+                return card != null ? card : child;
+            }
+        }
+        return null;
+    }
+
+    /** Aparencia de um app so: loja da Meta, colecao do Evolve ou o padrao das Configuracoes. */
+    private void showAppearanceForSingleSelected() {
+        AppInfo app = getSingleSelectedApp();
+        if (app == null) return;
+        final String[] values = {null, StoreImageManager.SOURCE_META, StoreImageManager.SOURCE_EVOLVE};
+        String[] labels = {
+                getString(R.string.main_appearance_default, getString(StoreImageManager.isMeta(this)
+                        ? R.string.set_image_source_meta : R.string.set_image_source_evolve)),
+                getString(R.string.set_image_source_meta),
+                getString(R.string.set_image_source_evolve)
+        };
+        String current = StoreImageManager.getAppSource(this, app.packageName);
+        int checked = current == null ? 0 : (StoreImageManager.SOURCE_META.equals(current) ? 1 : 2);
+        new AlertDialog.Builder(this)
+                .setTitle(CustomLabelManager.getInstance(this).getDisplayLabel(
+                        app.packageName, app.label != null ? app.label : app.packageName))
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    StoreImageManager.setAppSource(this, app.packageName, values[which]);
+                    if (appAdapter != null) appAdapter.notifyDataSetChanged();
+                    if (StoreImageManager.usesMeta(this, app.packageName)) {
+                        List<String> one = new ArrayList<>();
+                        one.add(app.packageName);
+                        StoreImageManager.sync(this, one, true, () -> {
+                            if (appAdapter != null) appAdapter.notifyDataSetChanged();
+                        });
+                    }
+                    dialog.dismiss();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     /**
@@ -2322,10 +2435,11 @@ public class MainActivity extends AppCompatActivity {
 
     /** Loja da Meta: busca fotos novas ou mudadas e redesenha a grade quando chegam. */
     private void syncStoreImages(boolean force) {
-        if (!StoreImageManager.isMeta(this)) return;
         List<String> packages = new ArrayList<>();
         synchronized (appList) {
-            for (AppInfo app : appList) packages.add(app.packageName);
+            for (AppInfo app : appList) {
+                if (StoreImageManager.usesMeta(this, app.packageName)) packages.add(app.packageName);
+            }
         }
         if (packages.isEmpty()) return;
         StoreImageManager.sync(this, packages, force, () -> {
@@ -3528,6 +3642,7 @@ public class MainActivity extends AppCompatActivity {
                     selectedApps.remove(app.packageName);
                 } else {
                     selectedApps.add(app.packageName);
+                    optionsAnchorPackage = app.packageName;
                 }
 
                 if (appAdapter != null) {
@@ -3824,6 +3939,7 @@ public class MainActivity extends AppCompatActivity {
                 holder.selectCircle.setVisibility(View.GONE);
             }
 
+            holder.itemView.setTag(R.id.cardApp, app.packageName);
             loadAppIcon(holder, app);
 
             // Selected card visual treatment - works in edit mode OR when

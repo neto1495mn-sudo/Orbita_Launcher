@@ -193,4 +193,6 @@
     <string name="main_sort_name">Nome (A–Z)</string>
     <string name="main_sort_recent">Instalados recentemente</string>
     <string name="main_sort_played">Mais jogados</string>
+    <string name="main_bulk_appearance">Aparência</string>
+    <string name="main_appearance_default">Usar o padrão (%1$s)</string>
 </resources>

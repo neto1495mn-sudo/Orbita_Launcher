@@ -64,6 +64,26 @@ public final class StoreImageManager {
         return SOURCE_META.equals(getSource(context));
     }
 
+    private static final String KEY_APP_SOURCE_PREFIX = "img_src_";
+
+    /** Escolha feita so para este app (null = segue o padrao das Configuracoes). */
+    public static String getAppSource(Context context, String packageName) {
+        return prefs(context).getString(KEY_APP_SOURCE_PREFIX + packageName, null);
+    }
+
+    public static void setAppSource(Context context, String packageName, String source) {
+        SharedPreferences.Editor e = prefs(context).edit();
+        if (source == null) e.remove(KEY_APP_SOURCE_PREFIX + packageName);
+        else e.putString(KEY_APP_SOURCE_PREFIX + packageName, source);
+        e.apply();
+    }
+
+    /** Este app usa a foto da loja da Meta? (escolha do app, senao o padrao) */
+    public static boolean usesMeta(Context context, String packageName) {
+        String own = getAppSource(context, packageName);
+        return own != null ? SOURCE_META.equals(own) : isMeta(context);
+    }
+
     public static void setSource(Context context, String source) {
         prefs(context).edit().putString(PREF_IMAGE_SOURCE, source).apply();
         lastSyncAt = 0;
@@ -102,7 +122,7 @@ public final class StoreImageManager {
      * uma URL (Evolve) ou null (usar o icone original).
      */
     public static Object imageModel(Context context, String packageName) {
-        if (isMeta(context)) return getSavedImage(context, packageName);
+        if (usesMeta(context, packageName)) return getSavedImage(context, packageName);
         return evolveUrl(packageName);
     }
 
@@ -121,18 +141,18 @@ public final class StoreImageManager {
      * Chama onChanged (na tela principal) se alguma foto foi trocada.
      */
     public static void sync(Context context, List<String> packageNames, boolean force, Runnable onChanged) {
-        if (!isMeta(context) || !isOnline(context)) return;
+        if (packageNames.isEmpty() || !isOnline(context)) return;
         long now = System.currentTimeMillis();
         if (!force && now - lastSyncAt < MIN_SYNC_INTERVAL_MS) return;
         if (!syncing.compareAndSet(false, true)) return;
-        lastSyncAt = now;
+        if (!force) lastSyncAt = now;
 
         Context app = context.getApplicationContext();
         executor.execute(() -> {
             boolean changed = false;
             try {
                 for (String pkg : packageNames) {
-                    if (!isMeta(app)) break;
+                    if (!usesMeta(app, pkg)) continue;
                     try {
                         if (syncOne(app, pkg)) changed = true;
                     } catch (Exception e) {

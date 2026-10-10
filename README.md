@@ -47,6 +47,8 @@ Organize your apps, track your playtime and set up the launcher your way.
 ### App settings shortcut
 Long-press an app and tap **App settings** to open its native Android settings screen (permissions, storage, force stop).
 
+The options column opens right next to the app you pressed. **Appearance** there picks that app's picture (Meta store, Evolve collection, or the default from Settings).
+
 ### Languages
 The app follows the language of the Quest. It is available in English and Portuguese (Brazil). Any other system language falls back to English.
 
