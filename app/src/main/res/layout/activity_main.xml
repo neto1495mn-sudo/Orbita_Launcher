@@ -117,7 +117,7 @@
                         android:fontFeatureSettings="tnum"
                         android:maxLines="1"
                         android:tag="secondary"
-                        android:text="00:00:00"
+                        android:text="00:00"
                         android:textColor="#CCCCCC"
                         android:textSize="16sp" />
 
@@ -242,16 +242,14 @@
                     <LinearLayout
                         android:id="@+id/searchContainer"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="36dp"
                         android:layout_marginEnd="10dp"
                         android:background="@drawable/search_background"
                         android:gravity="center_vertical"
                         android:minWidth="80dp"
                         android:orientation="horizontal"
                         android:paddingStart="14dp"
-                        android:paddingTop="3dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="3dp">
+                        android:paddingEnd="14dp">
 
                         <ImageView
                             android:layout_width="16dp"
@@ -263,8 +261,11 @@
                         <EditText
                             android:id="@+id/searchEditText"
                             android:layout_width="130dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:background="@android:color/transparent"
+                            android:fontFamily="sans-serif-medium"
+                            android:gravity="center_vertical"
+                            android:padding="0dp"
                             android:hint="@string/main_search_hint"
                             android:imeOptions="actionSearch"
                             android:inputType="text"
@@ -287,16 +288,14 @@
                     <LinearLayout
                         android:id="@+id/btnCategoryDropdown"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="36dp"
                         android:background="@drawable/bg_pill_dropdown"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="8dp">
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp">
 
                         <TextView
                             android:id="@+id/txtCategoryDropdown"
@@ -311,9 +310,9 @@
                             android:textSize="13sp" />
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginStart="4dp"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginStart="8dp"
                             android:src="@drawable/ic_nav_expand"
                             app:tint="#FFFFFF" />
                     </LinearLayout>

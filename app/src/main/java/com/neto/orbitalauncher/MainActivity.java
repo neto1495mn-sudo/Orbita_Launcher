@@ -584,7 +584,7 @@ public class MainActivity extends AppCompatActivity {
             // Themed pill-shaped background
             android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
             bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            bg.setCornerRadius(20 * d);
+            bg.setCornerRadius(24 * d);
             com.neto.orbitalauncher.theme.Theme theme =
                     com.neto.orbitalauncher.theme.ThemeManager.getInstance(this).getCurrentTheme();
             bg.setColor(theme.bgSecondary);
@@ -657,7 +657,9 @@ public class MainActivity extends AppCompatActivity {
         btn.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
         btn.setAllCaps(false);
         btn.setGravity(android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL);
-        btn.setPadding((int)(14 * d), (int)(9 * d), (int)(14 * d), (int)(9 * d));
+        btn.setPadding((int)(14 * d), 0, (int)(14 * d), 0);
+        btn.setMinHeight((int)(36 * d));
+        btn.setMinimumHeight((int)(36 * d));
 
         // Android-style line icon on the left, tinted to the text color
         android.graphics.drawable.Drawable icon = getDrawable(iconRes);
@@ -669,12 +671,10 @@ public class MainActivity extends AppCompatActivity {
             btn.setCompoundDrawablesRelative(icon, null, null, null);
             btn.setCompoundDrawablePadding((int)(12 * d));
         }
-        btn.setMinHeight(0);
-        btn.setMinimumHeight(0);
 
         android.graphics.drawable.GradientDrawable btnBg = new android.graphics.drawable.GradientDrawable();
         btnBg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        btnBg.setCornerRadius(20 * d);
+        btnBg.setCornerRadius(18 * d);
         btnBg.setColor(theme.bgSecondary);
         btnBg.setStroke((int)(1 * d), theme.borderPrimary);
         btn.setBackground(btnBg);
@@ -937,7 +937,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTime() {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
         String currentTime = sdf.format(new Date());
         txtTime.setText(currentTime);
     }
@@ -1519,115 +1519,17 @@ public class MainActivity extends AppCompatActivity {
     // layout pass needed for hover hitboxes to be correct on all Quest headsets.
     private int iconScaleOverride = -1;
 
-    /**
-     * VR POLISH: animates ALL currently visible cards flying in from 8 different
-     * directions. Runs ONCE per session, triggered by a layout listener after
-     * the grid has fully laid out its children.
-     *
-     * Using a batch approach (all-at-once after layout) instead of per-bind
-     * animation avoids race conditions where some cards animate and others
-     * don't, depending on when their onBindViewHolder fires relative to the
-     * RecyclerView's layout pass.
-     */
+    /** Abertura do launcher: os apps aparecem com o mesmo fade simples da troca de pasta. */
     private void playEntryAnimation() {
         if (entryAnimationPlayed || appsGrid == null) return;
         if (appsGrid.getChildCount() == 0) return;  // no children yet, wait
         entryAnimationPlayed = true;
-
-        float density = getResources().getDisplayMetrics().density;
-        float distance = 300f * density;
-
-        // STEP 1: While the grid is still alpha=0 (invisible), set each child
-        // to its off-screen starting state. This way when we reveal the grid,
-        // the children are already invisible (alpha 0) and off-position - no
-        // static-layout flash.
-        for (int i = 0; i < appsGrid.getChildCount(); i++) {
-            View card = appsGrid.getChildAt(i);
-            if (card == null) continue;
-
-            int direction = i % 8;
-            float startX = 0f, startY = 0f;
-            switch (direction) {
-                case 0: startY = -distance; break;
-                case 1: startX = distance;  startY = -distance; break;
-                case 2: startX = distance;  break;
-                case 3: startX = distance;  startY = distance;  break;
-                case 4: startY = distance;  break;
-                case 5: startX = -distance; startY = distance;  break;
-                case 6: startX = -distance; break;
-                case 7: startX = -distance; startY = -distance; break;
-            }
-
-            float startRotation = (direction % 2 == 0) ? -8f : 8f;
-
-            card.setTranslationX(startX);
-            card.setTranslationY(startY);
-            card.setAlpha(0f);
-            card.setScaleX(0.5f);
-            card.setScaleY(0.5f);
-            card.setRotation(startRotation);
-        }
-
-        // STEP 2: Reveal the grid container - children still invisible because
-        // their individual alpha is 0
-        appsGrid.setAlpha(1f);
-
-        // Track when the last card's animation finishes so we can do
-        // a final cleanup that fixes hover-dispatch issues on some headsets.
-        // The user reported that resizing icons fixes broken hover - this
-        // mimics what resize does (a notifyDataSetChanged rebind) which
-        // resets RecyclerView's internal touch/hover dispatch state.
-        final int totalCards = appsGrid.getChildCount();
-        long maxDelay = (totalCards - 1) * 45L + 650L + 100L;  // last card finish + buffer
-
-        // STEP 3: Animate each child flying in
-        for (int i = 0; i < appsGrid.getChildCount(); i++) {
-            final View card = appsGrid.getChildAt(i);
-            if (card == null) continue;
-
-            long delay = i * 45L;
-
-            card.animate()
-                    .translationX(0f)
-                    .translationY(0f)
-                    .alpha(1f)
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .rotation(0f)
-                    .setDuration(650)
-                    .setStartDelay(delay)
-                    .setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f))
-                    .withEndAction(() -> {
-                        // Hard-reset to clean rest state at end of entry animation
-                        card.setTranslationX(0f);
-                        card.setTranslationY(0f);
-                        card.setAlpha(1f);
-                        card.setScaleX(1f);
-                        card.setScaleY(1f);
-                        card.setRotation(0f);
-                    })
-                    .start();
-        }
-
-        // Final cleanup: do the "resize trick" that fixes hover dispatch
-        // on some Quest headsets. We temporarily render icons at a SMALLER
-        // size, then restore to the actual size. The size transition forces
-        // a real layout pass which makes hover hitboxes correct.
-        // This is what the user found empirically: resizing fixes hover.
-        appsGrid.postDelayed(() -> {
-            int actualScale = prefs.getInt("icon_size_scale", DEFAULT_SCALE_INDEX);
-            // Pick a DIFFERENT scale to ensure dimensions actually change
-            int tempScale = (actualScale == 0) ? 1 : 0;
-
-            iconScaleOverride = tempScale;
-            if (appAdapter != null) appAdapter.notifyDataSetChanged();
-
-            // After one layout pass, restore actual scale
-            appsGrid.post(() -> appsGrid.post(() -> {
-                iconScaleOverride = -1;
-                if (appAdapter != null) appAdapter.notifyDataSetChanged();
-            }));
-        }, maxDelay);
+        appsGrid.animate().cancel();
+        appsGrid.animate()
+                .alpha(1f)
+                .setDuration(150)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .start();
     }
 
     /**
@@ -2251,8 +2153,8 @@ public class MainActivity extends AppCompatActivity {
     // Ordem que o usuario montou arrastando, salva separada para cada pasta
     private static final String KEY_ORDER_PREFIX = "order_";
 
-    private void applySavedOrder(List<AppInfo> list, String category) {
-        String saved = prefs.getString(KEY_ORDER_PREFIX + category, "");
+    private void applySavedOrder(List<AppInfo> list, String prefKey) {
+        String saved = prefs.getString(prefKey, "");
         if (saved.isEmpty()) return;
         final Map<String, Integer> index = new HashMap<>();
         String[] pkgs = saved.split(",");
@@ -2263,13 +2165,13 @@ public class MainActivity extends AppCompatActivity {
                 index.containsKey(b.packageName) ? index.get(b.packageName) : Integer.MAX_VALUE));
     }
 
-    private void saveCurrentOrder() {
+    private void saveCurrentOrder(String prefKey) {
         StringBuilder sb = new StringBuilder();
         for (AppInfo app : filteredList) {
             if (sb.length() > 0) sb.append(',');
             sb.append(app.packageName);
         }
-        prefs.edit().putString(KEY_ORDER_PREFIX + currentCategory, sb.toString()).apply();
+        prefs.edit().putString(prefKey, sb.toString()).apply();
     }
 
     private String getAppName(String packageName, ApplicationInfo appInfo) {
@@ -3233,7 +3135,11 @@ public class MainActivity extends AppCompatActivity {
         if (draggingPackage == null) return;
         draggingPackage = null;
         dragGroup.clear();
-        if (reorderedDuringDrag) switchToCustomOrder();
+        if (reorderedDuringDrag) {
+            // Na Pessoal o arrasto edita a propria Pessoal; nas outras vira Personalizada
+            if (SORT_PERSONAL.equals(getSortMode())) saveCurrentOrder(KEY_PERSONAL_ORDER_PREFIX + currentCategory);
+            else switchToCustomOrder();
+        }
         reorderedDuringDrag = false;
         dragMoved = false;
         if (appsGrid != null) appsGrid.setItemAnimator(null);
@@ -3296,7 +3202,7 @@ public class MainActivity extends AppCompatActivity {
         float d = getResources().getDisplayMetrics().density;
         boolean selected = item.getTag() != null && item.getTag().equals(currentCategory);
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-        bg.setCornerRadius(12 * d);
+        bg.setCornerRadius(14 * d);
         if (selected) {
             bg.setColor(Color.parseColor("#6B8EFF"));
         } else if (hovered) {
@@ -3362,7 +3268,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String SORT_NAME = "name";
     private static final String SORT_RECENT = "recent";
     private static final String SORT_PLAYED = "played";
-    private static final String[] SORT_MODES = {SORT_CUSTOM, SORT_NAME, SORT_RECENT, SORT_PLAYED};
+    // Pessoal: ordem fixa do usuario, guardada a parte (outras ordens nunca mexem nela)
+    private static final String SORT_PERSONAL = "personal";
+    private static final String KEY_PERSONAL_ORDER_PREFIX = "personal_order_";
+    private static final String[] SORT_MODES = {SORT_PERSONAL, SORT_CUSTOM, SORT_NAME, SORT_RECENT, SORT_PLAYED};
 
     private String getSortMode() {
         return prefs.getString(KEY_SORT_MODE, SORT_RECENT);
@@ -3370,6 +3279,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String sortModeLabel(String mode) {
         switch (mode) {
+            case SORT_PERSONAL: return getString(R.string.main_sort_personal);
             case SORT_CUSTOM: return getString(R.string.main_sort_custom);
             case SORT_NAME: return getString(R.string.main_sort_name);
             case SORT_PLAYED: return getString(R.string.main_sort_played);
@@ -3405,7 +3315,11 @@ public class MainActivity extends AppCompatActivity {
         if (SORT_CUSTOM.equals(mode)) {
             // Personalizada: parte da ordem que estava antes e aplica o que foi arrastado
             sortByMode(list, prefs.getString(KEY_CUSTOM_BASE, SORT_RECENT));
-            applySavedOrder(list, category);
+            applySavedOrder(list, KEY_ORDER_PREFIX + category);
+        } else if (SORT_PERSONAL.equals(mode)) {
+            // Pessoal: apps novos (sem lugar guardado) entram no fim, mais recentes primeiro
+            sortByMode(list, SORT_RECENT);
+            applySavedOrder(list, KEY_PERSONAL_ORDER_PREFIX + category);
         } else {
             sortByMode(list, mode);
         }
@@ -3448,7 +3362,7 @@ public class MainActivity extends AppCompatActivity {
             editor.putString(KEY_SORT_MODE, SORT_CUSTOM);
         }
         editor.apply();
-        saveCurrentOrder();
+        saveCurrentOrder(KEY_ORDER_PREFIX + currentCategory);
         refreshCategoryDropdownLabel();
     }
 

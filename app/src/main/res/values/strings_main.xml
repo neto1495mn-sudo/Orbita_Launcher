@@ -188,6 +188,7 @@
     <string name="main_toast_edit_renamed">✅ Renamed to: %1$s</string>
     <string name="main_toast_edit_reset">↩️ Reset to: %1$s</string>
 
+    <string name="main_sort_personal">Personal</string>
     <string name="main_sort_custom">Custom</string>
     <string name="main_sort_name">Name (A–Z)</string>
     <string name="main_sort_recent">Recently installed</string>
