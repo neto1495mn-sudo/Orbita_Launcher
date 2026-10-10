@@ -34,7 +34,6 @@
                 android:paddingBottom="14dp"
                 android:tag="theme_ignore">
 
-
             <ImageView
                 android:id="@+id/navAll"
                 android:layout_width="46dp"
@@ -48,10 +47,29 @@
                 android:src="@drawable/ic_apps"
                 app:tint="#2B2C2F" />
 
+            <!-- Categorias criadas pelo usuario: descem ao tocar no icone de apps e sobem ao tocar de novo -->
+            <ScrollView
+                android:id="@+id/sideCategoryScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/sideCategoryList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:visibility="gone" />
+            </ScrollView>
+
             <ImageView
                 android:id="@+id/navCategories"
                 android:layout_width="46dp"
                 android:layout_height="46dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:padding="11dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
@@ -60,36 +78,6 @@
                 android:focusable="true"
                 android:src="@drawable/ic_nav_categories"
                 app:tint="#FFFFFF" />
-
-            <ImageView
-                android:id="@+id/navPlaytime"
-                android:layout_width="46dp"
-                android:layout_height="46dp"
-                android:layout_marginBottom="10dp"
-                android:padding="11dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:contentDescription="@string/main_cd_playtime_stats"
-                android:focusable="true"
-                android:src="@drawable/ic_nav_timer"
-                app:tint="#FFFFFF" />
-
-
-
-            <ImageView
-                android:id="@+id/navDevice"
-                android:layout_width="46dp"
-                android:layout_height="46dp"
-                android:layout_marginBottom="10dp"
-                android:padding="11dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:contentDescription="@string/main_cd_device_info"
-                android:focusable="true"
-                android:src="@drawable/ic_nav_info"
-                app:tint="#FFFFFF" />
-
-            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
 
             <ImageView
                 android:id="@+id/navQuickSettings"

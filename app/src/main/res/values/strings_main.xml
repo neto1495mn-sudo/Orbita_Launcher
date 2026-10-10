@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="main_cd_all_apps">All apps</string>
-    <string name="main_cd_categories">Categories</string>
+    <string name="main_cd_categories">File explorer</string>
     <string name="main_cd_playtime_stats">Playtime stats</string>
     <string name="main_cd_device_info">Device info</string>
     <string name="main_cd_quick_settings">Quick settings</string>
@@ -57,6 +57,9 @@
     <string name="main_qs_brightness">Brightness</string>
     <string name="main_qs_wifi">Wi-Fi</string>
     <string name="main_qs_bluetooth">Bluetooth</string>
+    <string name="main_qs_playtime">🕒  Playtime</string>
+    <string name="main_qs_device_info">ⓘ  Device info</string>
+    <string name="main_side_all">All</string>
     <string name="main_qs_power">Power</string>
     <string name="main_qs_reboot">🔄  Reboot</string>
     <string name="main_qs_power_off">⏻  Power Off</string>

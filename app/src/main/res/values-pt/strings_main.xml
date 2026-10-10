@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="main_cd_all_apps">Todos os apps</string>
-    <string name="main_cd_categories">Categorias</string>
+    <string name="main_cd_categories">Explorador de arquivos</string>
     <string name="main_cd_playtime_stats">Estatísticas de tempo de jogo</string>
     <string name="main_cd_device_info">Informações do dispositivo</string>
     <string name="main_cd_quick_settings">Configurações rápidas</string>
@@ -57,6 +57,9 @@
     <string name="main_qs_brightness">Brilho</string>
     <string name="main_qs_wifi">Wi-Fi</string>
     <string name="main_qs_bluetooth">Bluetooth</string>
+    <string name="main_qs_playtime">🕒  Tempo de jogo</string>
+    <string name="main_qs_device_info">ⓘ  Info do aparelho</string>
+    <string name="main_side_all">Todos</string>
     <string name="main_qs_power">Energia</string>
     <string name="main_qs_reboot">🔄  Reiniciar</string>
     <string name="main_qs_power_off">⏻  Desligar</string>

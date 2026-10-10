@@ -1262,6 +1262,27 @@ public class MainActivity extends AppCompatActivity {
 
             section.addView(togglesRow);
 
+            // --- Tempo de jogo + Info do aparelho (sairam da barra lateral) ---
+            android.widget.LinearLayout infoRow = new android.widget.LinearLayout(this);
+            infoRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            infoRow.setPadding(0, (int)(8 * d), 0, 0);
+
+            android.widget.Button playtimeBtn = makeQuickSettingsButton(getString(R.string.main_qs_playtime), theme);
+            playtimeBtn.setOnClickListener(v -> openFromQuickSettings(PlaytimeStatsActivity.class));
+            android.widget.LinearLayout.LayoutParams half3 = new android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            half3.setMargins(0, 0, (int)(4 * d), 0);
+            infoRow.addView(playtimeBtn, half3);
+
+            android.widget.Button deviceBtn = makeQuickSettingsButton(getString(R.string.main_qs_device_info), theme);
+            deviceBtn.setOnClickListener(v -> openFromQuickSettings(DeviceInfoActivity.class));
+            android.widget.LinearLayout.LayoutParams half4 = new android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            half4.setMargins((int)(4 * d), 0, 0, 0);
+            infoRow.addView(deviceBtn, half4);
+
+            section.addView(infoRow);
+
             // --- Power buttons row (Reboot + Power Off) ---
             android.widget.TextView powerLabel = new android.widget.TextView(this);
             powerLabel.setText(getString(R.string.main_qs_power));
@@ -1288,6 +1309,12 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             android.util.Log.e("MainActivity", "Failed to add extended quick settings", e);
         }
+    }
+
+    private void openFromQuickSettings(Class<?> target) {
+        hideQuickSettings();
+        startActivity(new Intent(this, target));
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private android.widget.Button makeQuickSettingsButton(String text,
@@ -3239,6 +3266,8 @@ public class MainActivity extends AppCompatActivity {
             addCategoryButton(category, () -> switchToCategoryAnimated(category));
         }
 
+        buildSideCategoryList();
+
         // Schedule the initial entry animation (only runs once per session).
         // For subsequent buildCategoryBar calls (e.g. after a category is
         // added in Settings), animate only the NEW buttons.
@@ -3353,19 +3382,14 @@ public class MainActivity extends AppCompatActivity {
     // ------------------------------------------------------------------
     private void setupSideNav() {
         try {
+            // Icone de apps: abre/fecha a lista de categorias logo abaixo dele
             View navAll = findViewById(R.id.navAll);
-            if (navAll != null) navAll.setOnClickListener(v -> {
-                if (searchEditText != null) searchEditText.setText("");
-                switchToCategoryAnimated("All Apps");
-            });
+            if (navAll != null) navAll.setOnClickListener(v -> toggleSideCategoryList());
 
             View navCategories = findViewById(R.id.navCategories);
             View dropdown = findViewById(R.id.btnCategoryDropdown);
             if (navCategories != null) navCategories.setOnClickListener(v -> openFileExplorer());
             if (dropdown != null) dropdown.setOnClickListener(v -> showCategoryPopup(v));
-
-            bindNavActivity(R.id.navPlaytime, PlaytimeStatsActivity.class);
-            bindNavActivity(R.id.navDevice, DeviceInfoActivity.class);
 
             View navQuick = findViewById(R.id.navQuickSettings);
             if (navQuick != null) navQuick.setOnClickListener(v -> {
@@ -3397,13 +3421,161 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, getString(R.string.main_toast_file_explorer_failed), Toast.LENGTH_SHORT).show();
     }
 
-    private void bindNavActivity(int viewId, Class<?> target) {
-        View v = findViewById(viewId);
-        if (v == null) return;
-        v.setOnClickListener(x -> {
-            startActivity(new Intent(this, target));
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    // ------------------------------------------------------------------
+    // Lista de categorias na barra lateral
+    // ------------------------------------------------------------------
+    private boolean sideCategoriesExpanded = false;
+
+    private void toggleSideCategoryList() {
+        final View list = findViewById(R.id.sideCategoryList);
+        if (list == null) return;
+        sideCategoriesExpanded = !sideCategoriesExpanded;
+        list.animate().cancel();
+        list.setPivotY(0f);
+        if (sideCategoriesExpanded) {
+            buildSideCategoryList();
+            list.setVisibility(View.VISIBLE);
+            list.setAlpha(0f);
+            list.setScaleY(0.6f);
+            list.animate().alpha(1f).scaleY(1f).setDuration(180)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+        } else {
+            list.animate().alpha(0f).scaleY(0.6f).setDuration(140)
+                    .withEndAction(() -> list.setVisibility(View.GONE)).start();
+        }
+    }
+
+    /** Monta os itens da lista: "Todos" + as categorias que o usuario criou, em ordem alfabetica. */
+    private void buildSideCategoryList() {
+        android.widget.LinearLayout list = findViewById(R.id.sideCategoryList);
+        if (list == null) return;
+        list.removeAllViews();
+
+        list.addView(makeSideCategoryItem("All Apps", getString(R.string.main_side_all), R.drawable.ic_apps));
+
+        java.util.List<String> names = new java.util.ArrayList<>(categories.keySet());
+        java.util.Collections.sort(names, String.CASE_INSENSITIVE_ORDER);
+        for (String name : names) {
+            list.addView(makeSideCategoryItem(name, displayCategoryName(name), iconForCategory(name)));
+        }
+        refreshSideCategorySelection();
+    }
+
+    private View makeSideCategoryItem(String key, String label, int iconRes) {
+        float d = getResources().getDisplayMetrics().density;
+
+        android.widget.LinearLayout item = new android.widget.LinearLayout(this);
+        item.setOrientation(android.widget.LinearLayout.VERTICAL);
+        item.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+        item.setPadding((int) (2 * d), (int) (7 * d), (int) (2 * d), (int) (6 * d));
+        item.setTag(key);
+        item.setClickable(true);
+        item.setFocusable(true);
+        item.setContentDescription(label);
+
+        android.widget.ImageView icon = new android.widget.ImageView(this);
+        icon.setImageResource(iconRes);
+        icon.setColorFilter(Color.WHITE);
+        item.addView(icon, new android.widget.LinearLayout.LayoutParams((int) (22 * d), (int) (22 * d)));
+
+        TextView text = new TextView(this);
+        text.setText(label);
+        text.setTextColor(Color.parseColor("#E0E0E0"));
+        text.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 9);
+        text.setSingleLine(true);
+        text.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        text.setGravity(android.view.Gravity.CENTER);
+        android.widget.LinearLayout.LayoutParams tp = new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        tp.topMargin = (int) (3 * d);
+        item.addView(text, tp);
+
+        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                (int) (60 * d), android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = (int) (6 * d);
+        item.setLayoutParams(lp);
+
+        // Mesmo comportamento do botao da barra de categorias (inclusive mover apps no modo de edicao)
+        item.setOnClickListener(v -> clickCategoryBarButton(key));
+
+        // Hover igual ao dos apps: cartao claro, sem zoom, some na hora
+        item.setOnHoverListener((v, event) -> {
+            int action = event.getAction();
+            if (action == android.view.MotionEvent.ACTION_HOVER_ENTER) {
+                styleSideCategoryItem(v, true);
+            } else if (action == android.view.MotionEvent.ACTION_HOVER_EXIT) {
+                styleSideCategoryItem(v, false);
+            }
+            return false;
         });
+        item.setOnFocusChangeListener((v, hasFocus) -> styleSideCategoryItem(v, hasFocus));
+
+        styleSideCategoryItem(item, false);
+        return item;
+    }
+
+    /** Fundo do item: azul quando e a categoria aberta, cinza claro no hover, transparente no resto. */
+    private void styleSideCategoryItem(View item, boolean hovered) {
+        float d = getResources().getDisplayMetrics().density;
+        boolean selected = item.getTag() != null && item.getTag().equals(currentCategory);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setCornerRadius(12 * d);
+        if (selected) {
+            bg.setColor(Color.parseColor("#6B8EFF"));
+        } else if (hovered) {
+            bg.setColor(Color.parseColor("#4D4E53"));
+        } else {
+            bg.setColor(Color.TRANSPARENT);
+        }
+        item.setBackground(bg);
+        item.setElevation(hovered && !selected ? 6 * d : 0f);
+    }
+
+    private void refreshSideCategorySelection() {
+        android.view.ViewGroup list = findViewById(R.id.sideCategoryList);
+        if (list == null) return;
+        for (int i = 0; i < list.getChildCount(); i++) {
+            styleSideCategoryItem(list.getChildAt(i), false);
+        }
+    }
+
+    /** Dispara o clique do botao correspondente na barra de categorias. */
+    private void clickCategoryBarButton(String key) {
+        if (categoryBar != null) {
+            for (int i = 0; i < categoryBar.getChildCount(); i++) {
+                View child = categoryBar.getChildAt(i);
+                if (child instanceof Button && key.equals(categoryButtonKey((Button) child))) {
+                    child.performClick();
+                    return;
+                }
+            }
+        }
+        if (searchEditText != null) searchEditText.setText("");
+        switchToCategoryAnimated(key);
+    }
+
+    /**
+     * Escolhe o icone pelo nome da categoria (portugues ou ingles, sem ligar para acento).
+     * Nome desconhecido fica com a pasta simples. Vale tambem para categorias criadas depois.
+     */
+    private int iconForCategory(String name) {
+        String n = java.text.Normalizer.normalize(name == null ? "" : name, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT);
+        if (containsAny(n, "jogo", "game", "gaming")) return R.drawable.ic_cat_games;
+        if (containsAny(n, "video", "filme", "movie", "cinema", "media", "midia", "tv", "stream", "serie")) return R.drawable.ic_cat_video;
+        if (containsAny(n, "music", "musica", "audio", "radio")) return R.drawable.ic_cat_music;
+        if (containsAny(n, "ferramenta", "tool", "utilit", "util")) return R.drawable.ic_cat_tools;
+        if (containsAny(n, "fitness", "exercicio", "treino", "esporte", "sport", "academia", "workout")) return R.drawable.ic_cat_fitness;
+        if (containsAny(n, "social", "amigo", "friend", "chat")) return R.drawable.ic_cat_social;
+        return R.drawable.ic_cat_folder;
+    }
+
+    private static boolean containsAny(String text, String... words) {
+        for (String w : words) {
+            if (text.contains(w)) return true;
+        }
+        return false;
     }
 
     /** Lista as categorias num menu; cada item dispara o clique do botao original da barra de categorias. */
@@ -3459,6 +3631,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateCategoryButtonStates(String selectedCategory) {
         refreshCategoryDropdownLabel();
+        refreshSideCategorySelection();
         if (categoryBar == null) return;
 
         for (int i = 0; i < categoryBar.getChildCount(); i++) {

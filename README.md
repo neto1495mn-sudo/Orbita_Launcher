@@ -15,7 +15,8 @@ Organize your apps, track your playtime and set up the launcher your way.
 - Search by app name or package
 - Category menu ("All Apps" and your own categories)
 - Hide apps you do not want to see
-- Quick settings panel (volume and more)
+- Sidebar: tap the apps icon to drop down your categories, each with an icon picked from its name (games, video, music, tools, fitness, social; any other name gets a plain folder); tap again to fold it up
+- Quick settings panel (volume, brightness, Wi-Fi, Bluetooth, playtime, device info, power)
 - Clock, IP address, Wi-Fi signal and battery in the status bar
 
 ### Categories
