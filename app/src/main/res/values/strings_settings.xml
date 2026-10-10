@@ -4,7 +4,6 @@
     <string name="set_section_launcher">LAUNCHER</string>
     <string name="set_launcher_subtitle">Customize how the app behaves</string>
     <string name="set_edit_mode">Edit mode</string>
-    <string name="set_show_categories">Show categories</string>
     <string name="set_categories">Categories</string>
     <string name="set_manage_categories">Manage categories</string>
     <string name="set_focus_trigger">Focus trigger</string>

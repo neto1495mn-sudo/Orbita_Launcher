@@ -105,31 +105,6 @@
                     android:scaleY="0.85" />
             </LinearLayout>
 
-            <!-- Show Categories -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="6dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/set_show_categories"
-                    android:textColor="#E0E0E0"
-                    android:textSize="11sp"
-                    android:paddingEnd="4dp" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchCategories"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:scaleX="0.85"
-                    android:scaleY="0.85" />
-            </LinearLayout>
-
             <!-- Manage Categories -->
             <TextView
                 android:layout_width="match_parent"

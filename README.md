@@ -17,13 +17,15 @@ Organize your apps, track your playtime and set up the launcher your way.
 - Hide apps you do not want to see
 - Sidebar: tap the apps icon to drop down your categories, each with an icon picked from its name (games, video, music, tools, fitness, social; any other name gets a plain folder); tap again to fold it up
 - Quick settings panel (volume, brightness, Wi-Fi, Bluetooth, battery saver, Guardian pause, playtime, device info, power)
-- Long-press an app and drag it onto a category in the sidebar to move it there
+- Long-press an app and drag it onto a category in the sidebar to move it there (the app shrinks and the folder lights up)
+- Drag apps around the grid to change their order, like on Android; each category keeps its own order
+- Comes with default categories (Games, Media, Social, Tools) already filled with common apps
+- "All Apps" shows every installed app except Meta system apps (unless you put one in a category)
 - Clock, IP address, Wi-Fi signal and battery in the status bar
 
 ### Categories
 - Create, rename and delete categories
 - Move several apps at once in Edit mode
-- Optional category badge on app icons
 
 ### Playtime
 - Today, this week, this month and all time

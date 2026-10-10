@@ -41,7 +41,6 @@
     <string name="main_bulk_stats">Stats</string>
     <string name="main_bulk_app_settings">App settings</string>
     <string name="main_bulk_uninstall">Uninstall</string>
-    <string name="main_bulk_clear">Clear</string>
     <string name="main_toast_switch_to_category">Switch to a category to remove apps from it</string>
     <string name="main_toast_removed_from_category_one">Removed %1$d app from %2$s</string>
     <string name="main_toast_removed_from_category_other">Removed %1$d apps from %2$s</string>

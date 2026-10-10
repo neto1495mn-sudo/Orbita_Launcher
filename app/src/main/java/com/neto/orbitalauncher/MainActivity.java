@@ -442,18 +442,9 @@ public class MainActivity extends AppCompatActivity {
         // Filter apps based on the restored category BEFORE creating adapter
         filteredList.clear();
         if (currentCategory.equals("All Apps")) {
-            // Show only uncategorized apps in All Apps view
+            // "Todos": todos os apps, menos os da Meta que nao estao em pasta
             for (AppInfo app : appList) {
-                boolean isInAnyCategory = false;
-                for (Set<String> categoryApps : categories.values()) {
-                    if (categoryApps.contains(app.packageName)) {
-                        isInAnyCategory = true;
-                        break;
-                    }
-                }
-                if (!isInAnyCategory) {
-                    filteredList.add(app);
-                }
+                if (showInAllApps(app)) filteredList.add(app);
             }
         } else {
             // Show apps from the saved category
@@ -466,6 +457,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        applySavedOrder(filteredList, currentCategory);
 
         // Create adapter with filtered list
         appAdapter = new AppAdapter(filteredList);
@@ -729,11 +721,6 @@ public class MainActivity extends AppCompatActivity {
             android.widget.Button uninstallBtn = makeBulkBarButton(getString(R.string.main_bulk_uninstall), R.drawable.ic_delete, theme);
             uninstallBtn.setOnClickListener(v -> confirmAndUninstallSelected());
             bulkActionBar.addView(uninstallBtn, makeBulkBarButtonParams(d));
-
-            // Clear button
-            android.widget.Button clearBtn = makeBulkBarButton(getString(R.string.main_bulk_clear), R.drawable.ic_close, theme);
-            clearBtn.setOnClickListener(v -> clearSelection());
-            bulkActionBar.addView(clearBtn, makeBulkBarButtonParams(d));
 
             // Position at the right edge, vertically centered
             android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
@@ -2855,7 +2842,102 @@ public class MainActivity extends AppCompatActivity {
             return label1.compareTo(label2);
         });
 
+        seedDefaultFolders();
         preloadIcons();
+    }
+
+    /**
+     * Pastas padrao: cada app conhecido (pelo nome) vai para a sua pasta uma unica vez.
+     * Se o usuario tirar o app de la depois, ele nao volta. "*" no fim = comeca com.
+     */
+    private static final String[][] DEFAULT_FOLDER_APPS = {
+            {"Games", "beatsaber", "moonlightxr", "portalvr", "re4vr", "sourcevrport",
+                    "superhotvr", "tacticalassaultvr", "virtualdesktop*"},
+            {"Media", "youtube*"},
+            {"Social", "facebook", "instagram", "whatsapp"},
+            {"Tools", "files", "arquivos", "orbitalauncher", "shizuku*"},
+    };
+    private static final String KEY_DEFAULT_FOLDERS_SEEDED = "default_folders_seeded";
+
+    private void seedDefaultFolders() {
+        Set<String> seeded = new HashSet<>(prefs.getStringSet(KEY_DEFAULT_FOLDERS_SEEDED, new HashSet<>()));
+        boolean changed = false;
+        for (AppInfo app : appList) {
+            if (seeded.contains(app.packageName)) continue;
+            String folder = defaultFolderFor(app);
+            if (folder == null) continue;
+            seeded.add(app.packageName);
+            changed = true;
+            if (isInAnyCategory(app.packageName)) continue;
+            String key = findCategoryKey(folder);
+            if (key == null) continue;
+            Set<String> updated = new HashSet<>(categories.get(key));
+            updated.add(app.packageName);
+            categoryPrefs.edit().putStringSet("cat_" + key, updated).apply();
+            categories.put(key, updated);
+            prefs.edit().putString("cat_" + app.packageName, key).apply();
+            app.category = key;
+        }
+        if (changed) prefs.edit().putStringSet(KEY_DEFAULT_FOLDERS_SEEDED, seeded).apply();
+    }
+
+    private String defaultFolderFor(AppInfo app) {
+        if (getPackageName().equals(app.packageName)) return "Tools";
+        String n = java.text.Normalizer.normalize(app.label == null ? "" : app.label, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        if (n.isEmpty()) return null;
+        for (String[] row : DEFAULT_FOLDER_APPS) {
+            for (int i = 1; i < row.length; i++) {
+                String k = row[i];
+                boolean match = k.endsWith("*") ? n.startsWith(k.substring(0, k.length() - 1)) : n.equals(k);
+                if (match) return row[0];
+            }
+        }
+        return null;
+    }
+
+    /** Acha a pasta com esse nome, sem ligar para maiusculas. */
+    private String findCategoryKey(String name) {
+        for (String key : categories.keySet()) {
+            if (key.equalsIgnoreCase(name)) return key;
+        }
+        return null;
+    }
+
+    private boolean isInAnyCategory(String packageName) {
+        for (Set<String> categoryApps : categories.values()) {
+            if (categoryApps.contains(packageName)) return true;
+        }
+        return false;
+    }
+
+    /** "Todos": todos os apps, menos os da Meta (a nao ser que estejam em alguma pasta). */
+    private boolean showInAllApps(AppInfo app) {
+        return !isInSystemPackageList(app.packageName) || isInAnyCategory(app.packageName);
+    }
+
+    // Ordem que o usuario montou arrastando, salva separada para cada pasta
+    private static final String KEY_ORDER_PREFIX = "order_";
+
+    private void applySavedOrder(List<AppInfo> list, String category) {
+        String saved = prefs.getString(KEY_ORDER_PREFIX + category, "");
+        if (saved.isEmpty()) return;
+        final Map<String, Integer> index = new HashMap<>();
+        String[] pkgs = saved.split(",");
+        for (int i = 0; i < pkgs.length; i++) index.put(pkgs[i], i);
+        // Sort estavel: apps sem posicao salva ficam no fim, em ordem alfabetica
+        list.sort((a, b) -> Integer.compare(
+                index.containsKey(a.packageName) ? index.get(a.packageName) : Integer.MAX_VALUE,
+                index.containsKey(b.packageName) ? index.get(b.packageName) : Integer.MAX_VALUE));
+    }
+
+    private void saveCurrentOrder() {
+        StringBuilder sb = new StringBuilder();
+        for (AppInfo app : filteredList) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(app.packageName);
+        }
+        prefs.edit().putString(KEY_ORDER_PREFIX + currentCategory, sb.toString()).apply();
     }
 
     private String getAppName(String packageName, ApplicationInfo appInfo) {
@@ -3021,17 +3103,7 @@ public class MainActivity extends AppCompatActivity {
         if (query.isEmpty()) {
             if (currentCategory.equals("All Apps")) {
                 for (AppInfo app : appList) {
-                    if (isInSystemPackageList(app.packageName)) continue;
-                    boolean isInAnyCategory = false;
-                    for (Set<String> categoryApps : categories.values()) {
-                        if (categoryApps.contains(app.packageName)) {
-                            isInAnyCategory = true;
-                            break;
-                        }
-                    }
-                    if (!isInAnyCategory) {
-                        newFilteredList.add(app);
-                    }
+                    if (showInAllApps(app)) newFilteredList.add(app);
                 }
             } else {
                 Set<String> pkgs = categories.get(currentCategory);
@@ -3044,6 +3116,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
+            applySavedOrder(newFilteredList, currentCategory);
 
             updateSearchStatus("", false);
 
@@ -3593,9 +3666,15 @@ public class MainActivity extends AppCompatActivity {
                 case android.view.DragEvent.ACTION_DRAG_STARTED:
                     return event.getLocalState() instanceof String;
                 case android.view.DragEvent.ACTION_DRAG_ENTERED:
-                    styleSideCategoryItem(v, true);
+                    // Pasta acende e o app arrastado diminui para mostrar onde vai cair
+                    markAppDragMoved();
+                    styleSideCategoryItem(v, true, true);
+                    animateDragShadow(DRAG_SHADOW_SMALL);
                     return true;
                 case android.view.DragEvent.ACTION_DRAG_EXITED:
+                    styleSideCategoryItem(v, false);
+                    animateDragShadow(1f);
+                    return true;
                 case android.view.DragEvent.ACTION_DRAG_ENDED:
                     styleSideCategoryItem(v, false);
                     return true;
@@ -3615,6 +3694,42 @@ public class MainActivity extends AppCompatActivity {
     // A lista foi aberta so por causa do arrasto? Entao fecha de novo quando o arrasto acabar.
     private boolean sideListOpenedForDrag = false;
 
+    // Arrasto de app em andamento (igual ao Android: o app sai do lugar e os outros abrem espaco)
+    private String draggingPackage = null;
+    private boolean dragMoved = false;
+    private boolean reorderedDuringDrag = false;
+    private float dragStartX = Float.NaN, dragStartY = Float.NaN;
+    private AppDragShadow currentDragShadow;
+    private android.animation.ValueAnimator dragShadowAnimator;
+    private static final float DRAG_SHADOW_SMALL = 0.45f;
+
+    /** Imagem do app que segue o ponteiro; pode ser diminuida enquanto esta em cima de uma pasta. */
+    private static class AppDragShadow extends View.DragShadowBuilder {
+        private final android.graphics.Bitmap bitmap;
+        float scale = 1f;
+
+        AppDragShadow(View v) {
+            super(v);
+            bitmap = android.graphics.Bitmap.createBitmap(Math.max(1, v.getWidth()), Math.max(1, v.getHeight()),
+                    android.graphics.Bitmap.Config.ARGB_8888);
+            v.draw(new android.graphics.Canvas(bitmap));
+        }
+
+        @Override
+        public void onProvideShadowMetrics(android.graphics.Point size, android.graphics.Point touch) {
+            size.set(bitmap.getWidth(), bitmap.getHeight());
+            touch.set(bitmap.getWidth() / 2, bitmap.getHeight() / 2);
+        }
+
+        @Override
+        public void onDrawShadow(android.graphics.Canvas canvas) {
+            canvas.save();
+            canvas.scale(scale, scale, bitmap.getWidth() / 2f, bitmap.getHeight() / 2f);
+            canvas.drawBitmap(bitmap, 0f, 0f, null);
+            canvas.restore();
+        }
+    }
+
     /** Comeca a arrastar o app (depois do toque longo), abrindo a lista de pastas se estiver fechada. */
     private void startAppDrag(View v, AppInfo app) {
         try {
@@ -3625,18 +3740,164 @@ public class MainActivity extends AppCompatActivity {
             View scroll = findViewById(R.id.sideCategoryScroll);
             if (scroll != null) {
                 scroll.setOnDragListener((sv, event) -> {
-                    if (event.getAction() == android.view.DragEvent.ACTION_DRAG_ENDED && sideListOpenedForDrag) {
-                        sideListOpenedForDrag = false;
-                        if (sideCategoriesExpanded) toggleSideCategoryList();
+                    if (event.getAction() == android.view.DragEvent.ACTION_DRAG_ENDED) {
+                        if (sideListOpenedForDrag) {
+                            sideListOpenedForDrag = false;
+                            if (sideCategoriesExpanded) toggleSideCategoryList();
+                        }
+                        finishAppDrag();
                     }
                     return true;
                 });
             }
+            setupGridDragListener();
+
+            currentDragShadow = new AppDragShadow(v);
+            draggingPackage = app.packageName;
+            dragMoved = false;
+            reorderedDuringDrag = false;
+            dragStartX = Float.NaN;
+            dragStartY = Float.NaN;
+
+            // Animacao dos outros apps abrindo espaco (so durante o arrasto)
+            androidx.recyclerview.widget.DefaultItemAnimator animator = new androidx.recyclerview.widget.DefaultItemAnimator();
+            animator.setMoveDuration(160);
+            animator.setSupportsChangeAnimations(false);
+            appsGrid.setItemAnimator(animator);
+
             android.content.ClipData data = android.content.ClipData.newPlainText("orbita_app", app.packageName);
-            v.startDragAndDrop(data, new View.DragShadowBuilder(v), app.packageName, 0);
+            boolean started = v.startDragAndDrop(data, currentDragShadow, app.packageName, 0);
+            if (!started) {
+                finishAppDrag();
+                return;
+            }
+            // O app sai do lugar: fica so a imagem flutuando
+            int pos = indexOfPackage(filteredList, app.packageName);
+            if (pos >= 0 && appAdapter != null) appAdapter.notifyItemChanged(pos);
         } catch (Exception e) {
             Log.w("MainActivity", "startAppDrag failed", e);
+            finishAppDrag();
         }
+    }
+
+    private boolean gridDragListenerSet = false;
+
+    /** A grade recebe o arrasto para reordenar os apps. */
+    private void setupGridDragListener() {
+        if (gridDragListenerSet || appsGrid == null) return;
+        gridDragListenerSet = true;
+        appsGrid.setOnDragListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.DragEvent.ACTION_DRAG_STARTED:
+                    return event.getLocalState() instanceof String;
+                case android.view.DragEvent.ACTION_DRAG_LOCATION:
+                    onGridDragLocation(event.getX(), event.getY());
+                    return true;
+                case android.view.DragEvent.ACTION_DRAG_EXITED:
+                    markAppDragMoved();
+                    return true;
+                case android.view.DragEvent.ACTION_DRAG_ENDED:
+                    finishAppDrag();
+                    return true;
+                default:
+                    return true;
+            }
+        });
+    }
+
+    /** Enquanto arrasta por cima da grade, os outros apps vao abrindo espaco. */
+    private void onGridDragLocation(float x, float y) {
+        float d = getResources().getDisplayMetrics().density;
+        if (Float.isNaN(dragStartX)) {
+            dragStartX = x;
+            dragStartY = y;
+        } else if (!dragMoved && Math.hypot(x - dragStartX, y - dragStartY) > 24 * d) {
+            markAppDragMoved();
+        }
+        if (!dragMoved || !canReorderHere()) return;
+
+        // Rola a grade quando chega perto da borda de cima ou de baixo
+        float edge = 48 * d;
+        if (y < edge) appsGrid.scrollBy(0, (int) (-12 * d));
+        else if (y > appsGrid.getHeight() - edge) appsGrid.scrollBy(0, (int) (12 * d));
+
+        RecyclerView.ItemAnimator anim = appsGrid.getItemAnimator();
+        if (anim != null && anim.isRunning()) return;
+
+        View child = appsGrid.findChildViewUnder(x, y);
+        if (child == null) return;
+        int to = appsGrid.getChildAdapterPosition(child);
+        int from = indexOfPackage(filteredList, draggingPackage);
+        if (to == RecyclerView.NO_POSITION || from < 0 || to == from) return;
+
+        // Guarda a posicao da rolagem: mover o primeiro item faz a grade pular
+        GridLayoutManager glm = (GridLayoutManager) appsGrid.getLayoutManager();
+        int firstPos = glm != null ? glm.findFirstVisibleItemPosition() : RecyclerView.NO_POSITION;
+        View firstView = firstPos != RecyclerView.NO_POSITION && glm != null ? glm.findViewByPosition(firstPos) : null;
+        int firstTop = firstView != null ? firstView.getTop() - appsGrid.getPaddingTop() : 0;
+
+        AppInfo moving = filteredList.remove(from);
+        filteredList.add(to, moving);
+        appAdapter.notifyItemMoved(from, to);
+        reorderedDuringDrag = true;
+
+        if (glm != null && firstPos != RecyclerView.NO_POSITION) {
+            glm.scrollToPositionWithOffset(firstPos, firstTop);
+        }
+    }
+
+    /** So da para reordenar sem busca ativa e fora da lista fixa da Meta. */
+    private boolean canReorderHere() {
+        boolean searching = searchEditText != null && searchEditText.getText().length() > 0;
+        return !searching && !"Meta Apps".equals(currentCategory);
+    }
+
+    /** O app comecou a ser arrastado de verdade: as opcoes da direita somem. */
+    private void markAppDragMoved() {
+        if (draggingPackage == null || dragMoved) return;
+        dragMoved = true;
+        if (!selectedApps.isEmpty()) clearSelectionQuietly();
+    }
+
+    /** Fim do arrasto: o app volta a aparecer e a ordem nova fica salva. */
+    private void finishAppDrag() {
+        if (dragShadowAnimator != null) dragShadowAnimator.cancel();
+        dragShadowAnimator = null;
+        currentDragShadow = null;
+        if (draggingPackage == null) return;
+        draggingPackage = null;
+        if (reorderedDuringDrag) saveCurrentOrder();
+        reorderedDuringDrag = false;
+        dragMoved = false;
+        if (appsGrid != null) appsGrid.setItemAnimator(null);
+        if (appAdapter != null) appAdapter.notifyDataSetChanged();
+    }
+
+    /** Aumenta ou diminui suavemente a imagem do app que esta sendo arrastado. */
+    private void animateDragShadow(float target) {
+        if (currentDragShadow == null || appsGrid == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return;
+        if (dragShadowAnimator != null) dragShadowAnimator.cancel();
+        final AppDragShadow shadow = currentDragShadow;
+        dragShadowAnimator = android.animation.ValueAnimator.ofFloat(shadow.scale, target);
+        dragShadowAnimator.setDuration(160);
+        dragShadowAnimator.addUpdateListener(a -> {
+            if (currentDragShadow != shadow) return;
+            shadow.scale = (float) a.getAnimatedValue();
+            try {
+                appsGrid.updateDragShadow(shadow);
+            } catch (Exception e) {
+                Log.w("MainActivity", "updateDragShadow failed", e);
+            }
+        });
+        dragShadowAnimator.start();
+    }
+
+    private static int indexOfPackage(List<AppInfo> list, String packageName) {
+        if (packageName == null) return -1;
+        for (int i = 0; i < list.size(); i++) {
+            if (packageName.equals(list.get(i).packageName)) return i;
+        }
+        return -1;
     }
 
     /** Move o app solto para a pasta (ou tira de todas as pastas, se for "Todos"). */
@@ -3659,6 +3920,11 @@ public class MainActivity extends AppCompatActivity {
 
     /** Fundo do item: azul quando e a categoria aberta, cinza claro no hover, transparente no resto. */
     private void styleSideCategoryItem(View item, boolean hovered) {
+        styleSideCategoryItem(item, hovered, false);
+    }
+
+    /** dropTarget: um app esta sendo arrastado em cima desta pasta (ganha um contorno claro). */
+    private void styleSideCategoryItem(View item, boolean hovered, boolean dropTarget) {
         float d = getResources().getDisplayMetrics().density;
         boolean selected = item.getTag() != null && item.getTag().equals(currentCategory);
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
@@ -3670,6 +3936,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             bg.setColor(Color.TRANSPARENT);
         }
+        if (dropTarget) bg.setStroke((int) (2 * d), Color.parseColor("#B8C8FF"));
         item.setBackground(bg);
         item.setElevation(hovered && !selected ? 6 * d : 0f);
     }
@@ -3988,6 +4255,44 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** Tira a selecao sem aviso (opcoes somem ao arrastar ou clicar fora). */
+    private void clearSelectionQuietly() {
+        selectedApps.clear();
+        if (appAdapter != null) appAdapter.notifyDataSetChanged();
+        updateBulkActionBarVisibility();
+    }
+
+    /**
+     * Clicar fora da coluna de opcoes fecha as opcoes. Clicar em outro app
+     * continua marcando/desmarcando ele (para escolher varios de uma vez).
+     */
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (ev.getActionMasked() == android.view.MotionEvent.ACTION_DOWN && !selectedApps.isEmpty()
+                && bulkActionBar != null && bulkActionBar.getVisibility() == View.VISIBLE
+                && !isTouchInside(bulkActionBar, ev) && !isTouchOnAppCard(ev)) {
+            clearSelectionQuietly();
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private static boolean isTouchInside(View v, android.view.MotionEvent ev) {
+        if (v == null || !v.isShown()) return false;
+        int[] loc = new int[2];
+        v.getLocationOnScreen(loc);
+        float x = ev.getRawX(), y = ev.getRawY();
+        return x >= loc[0] && x < loc[0] + v.getWidth() && y >= loc[1] && y < loc[1] + v.getHeight();
+    }
+
+    private boolean isTouchOnAppCard(android.view.MotionEvent ev) {
+        if (appsGrid == null || !isTouchInside(appsGrid, ev)) return false;
+        for (int i = 0; i < appsGrid.getChildCount(); i++) {
+            View card = appsGrid.getChildAt(i).findViewById(R.id.cardApp);
+            if (isTouchInside(card, ev)) return true;
+        }
+        return false;
+    }
+
     private void clearSelection() {
         selectedApps.clear();
         appAdapter.notifyDataSetChanged();
@@ -4003,21 +4308,6 @@ public class MainActivity extends AppCompatActivity {
         appAdapter.notifyDataSetChanged();
         updateBulkActionBarVisibility();
         Toast.makeText(this, getString(R.string.main_toast_selected_all, filteredList.size()), Toast.LENGTH_SHORT).show();
-    }
-
-    private int getCategoryColor(String category) {
-        switch (category.toLowerCase()) {
-            case "games":
-                return Color.parseColor("#FF6B8E");
-            case "media":
-                return Color.parseColor("#4CAF50");
-            case "tools":
-                return Color.parseColor("#2196F3");
-            case "social":
-                return Color.parseColor("#FF9800");
-            default:
-                return Color.parseColor("#9C27B0");
-        }
     }
 
     private class AppAdapter extends RecyclerView.Adapter<AppAdapter.ViewHolder> {
@@ -4069,6 +4359,8 @@ public class MainActivity extends AppCompatActivity {
             holder.cardView.setScaleX(1f);
             holder.cardView.setScaleY(1f);
             holder.cardView.setRotation(0f);
+            // O app que esta sendo arrastado sai do lugar (fica so a imagem flutuando)
+            holder.itemView.setAlpha(app.packageName.equals(draggingPackage) ? 0f : 1f);
 
             // Apply current theme to this card (handles recycled views)
             com.neto.orbitalauncher.theme.Theme theme =
@@ -4088,28 +4380,8 @@ public class MainActivity extends AppCompatActivity {
             holder.appName.setText(displayLabel);
             holder.appVersion.setVisibility(View.GONE); // Hide the version badge completely
 
-            // FIXED: Use safe boolean helper for show_categories
-            boolean showCategories = getBooleanPreference("show_categories", true);
-
-            if (showCategories && app.category != null && !app.category.equals("Uncategorized")) {
-                String badgeText = app.category.substring(0, 1).toUpperCase();
-                holder.categoryBadge.setText(badgeText);
-                holder.categoryBadge.setVisibility(View.VISIBLE);
-
-                // Force badge to be on top
-                holder.categoryBadge.bringToFront();
-                holder.categoryBadge.invalidate();
-                holder.categoryBadge.requestLayout();
-
-                int color = getCategoryColor(app.category.toLowerCase());
-                android.graphics.drawable.GradientDrawable chip = new android.graphics.drawable.GradientDrawable();
-                chip.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-                chip.setColor(color);
-                holder.categoryBadge.setBackground(chip);
-                holder.categoryBadge.setTextColor(Color.WHITE);
-            } else {
-                holder.categoryBadge.setVisibility(View.GONE);
-            }
+            // Sem selo de letra da pasta em cima do app
+            holder.categoryBadge.setVisibility(View.GONE);
 
             loadAppIcon(holder, app);
 
@@ -4147,21 +4419,6 @@ public class MainActivity extends AppCompatActivity {
                     startAppDrag(v, app);
                     return true;
                 });
-            }
-        }
-
-        private int getCategoryColor(String category) {
-            switch (category) {
-                case "games":
-                    return Color.parseColor("#FF6B8E");
-                case "media":
-                    return Color.parseColor("#4CAF50");
-                case "tools":
-                    return Color.parseColor("#2196F3");
-                case "social":
-                    return Color.parseColor("#FF9800");
-                default:
-                    return Color.parseColor("#9C27B0");
             }
         }
 

@@ -79,7 +79,6 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String KEY_EDIT_MODE = "edit_mode";
     private static final String KEY_ICON_SIZE = "icon_size";
     private static final String KEY_ICON_SIZE_SCALE = "icon_size_scale";  // Store scale index (0-4)
-    private static final String KEY_SHOW_CATEGORIES = "show_categories";
     private static final String KEY_BG_OPACITY = "background_opacity";
     private static final String KEY_AUTO_START = "auto_start";
     private static final String KEY_SUPPRESS_STORE = "suppress_store";
@@ -109,7 +108,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Initialize all views
         SwitchCompat switchEditMode = findViewById(R.id.switchEditMode);
-        SwitchCompat switchCategories = findViewById(R.id.switchCategories);
         SeekBar seekIconSize = findViewById(R.id.seekIconSize);
         TextView txtIconSize = findViewById(R.id.txtIconSize);
         TextView txtIconSizeRange = findViewById(R.id.txtIconSizeRange);
@@ -134,7 +132,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Set initial values
         switchEditMode.setChecked(prefs.getBoolean(KEY_EDIT_MODE, false));
-        switchCategories.setChecked(prefs.getBoolean(KEY_SHOW_CATEGORIES, true));
         switchAutoStart.setChecked(prefs.getBoolean(KEY_AUTO_START, true));
 
         // Update boot status label to reflect actual state
@@ -236,16 +233,6 @@ public class SettingsActivity extends AppCompatActivity {
             });
         }
 
-        switchCategories.setOnCheckedChangeListener((b, c) -> {
-            prefs.edit().putBoolean(KEY_SHOW_CATEGORIES, c).apply();
-            if (MainActivity.instance != null) {
-                new android.os.Handler().postDelayed(() -> {
-                    MainActivity.instance.runOnUiThread(() -> {
-                        MainActivity.instance.refreshDisplay();
-                    });
-                }, 200);
-            }
-        });
 
         seekBgOpacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar sb, int p, boolean f) {
